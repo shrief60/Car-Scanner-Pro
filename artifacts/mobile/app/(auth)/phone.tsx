@@ -24,13 +24,12 @@ export default function PhoneScreen() {
 
   async function handleSend() {
     if (!isValid) {
-      setError('أدخل رقم هاتف صحيح');
+      setError('Please enter a valid phone number');
       return;
     }
     setError('');
     setLoading(true);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Simulate OTP send delay
     await new Promise(r => setTimeout(r, 1200));
     setLoading(false);
     router.push({ pathname: '/(auth)/otp', params: { phone } });
@@ -60,13 +59,13 @@ export default function PhoneScreen() {
             <View style={styles.logoCircle}>
               <Text style={styles.logoQ}>Q</Text>
             </View>
-            <Text style={styles.appName}>قار</Text>
-            <Text style={styles.tagline}>هتوصل في ثوانٍ</Text>
+            <Text style={styles.appName}>Qar</Text>
+            <Text style={styles.tagline}>Get there in seconds</Text>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
-            <Text style={styles.label}>رقم الهاتف</Text>
+            <Text style={styles.label}>Phone Number</Text>
             <View style={styles.inputRow}>
               <View style={styles.prefix}>
                 <Text style={styles.prefixText}>+20</Text>
@@ -99,13 +98,13 @@ export default function PhoneScreen() {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>إرسال كود التحقق</Text>
+                <Text style={styles.buttonText}>Send Verification Code</Text>
               )}
             </Pressable>
           </View>
 
           <Text style={styles.note}>
-            سيتم إرسال رمز التحقق على رقمك عبر رسالة نصية
+            We'll send a verification code to your number via SMS
           </Text>
         </View>
       </KeyboardAvoidingView>
@@ -155,14 +154,11 @@ const styles = StyleSheet.create({
     color: '#7fb5ae',
     marginTop: 6,
   },
-  form: {
-    gap: 12,
-  },
+  form: { gap: 12 },
   label: {
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
     color: '#7fb5ae',
-    textAlign: 'right',
   },
   inputRow: {
     flexDirection: 'row',
@@ -199,7 +195,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
     color: '#ef4444',
-    textAlign: 'right',
   },
   button: {
     backgroundColor: '#FFFFFF',
@@ -208,13 +203,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  buttonDisabled: {
-    opacity: 0.4,
-  },
-  buttonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
+  buttonDisabled: { opacity: 0.4 },
+  buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   buttonText: {
     fontSize: 17,
     fontFamily: 'Inter_700Bold',

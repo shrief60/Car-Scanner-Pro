@@ -16,20 +16,20 @@ import * as Haptics from 'expo-haptics';
 import { useCars } from '@/context/CarsContext';
 
 const CAR_TYPES = [
-  'سيدان', 'هاتشباك', 'SUV', 'بيك أب', 'ميني فان', 'كوبيه', 'أخرى',
+  'Sedan', 'Hatchback', 'SUV', 'Pickup', 'Minivan', 'Coupe', 'Other',
 ];
 
 const COLORS = [
-  { label: 'أبيض', value: 'أبيض', hex: '#F5F5F5' },
-  { label: 'أسود', value: 'أسود', hex: '#1a1a1a' },
-  { label: 'فضي', value: 'فضي', hex: '#9e9e9e' },
-  { label: 'رمادي', value: 'رمادي', hex: '#616161' },
-  { label: 'أحمر', value: 'أحمر', hex: '#e53935' },
-  { label: 'أزرق', value: 'أزرق', hex: '#1e88e5' },
-  { label: 'أخضر', value: 'أخضر', hex: '#43a047' },
-  { label: 'بني', value: 'بني', hex: '#795548' },
-  { label: 'أصفر', value: 'أصفر', hex: '#fdd835' },
-  { label: 'برتقالي', value: 'برتقالي', hex: '#fb8c00' },
+  { label: 'White',  value: 'White',  hex: '#F5F5F5' },
+  { label: 'Black',  value: 'Black',  hex: '#1a1a1a' },
+  { label: 'Silver', value: 'Silver', hex: '#9e9e9e' },
+  { label: 'Gray',   value: 'Gray',   hex: '#616161' },
+  { label: 'Red',    value: 'Red',    hex: '#e53935' },
+  { label: 'Blue',   value: 'Blue',   hex: '#1e88e5' },
+  { label: 'Green',  value: 'Green',  hex: '#43a047' },
+  { label: 'Brown',  value: 'Brown',  hex: '#795548' },
+  { label: 'Yellow', value: 'Yellow', hex: '#fdd835' },
+  { label: 'Orange', value: 'Orange', hex: '#fb8c00' },
 ];
 
 export default function AddCarScreen() {
@@ -47,7 +47,7 @@ export default function AddCarScreen() {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!plate.trim()) e.plate = 'رقم اللوحة مطلوب';
+    if (!plate.trim()) e.plate = 'License plate is required';
     return e;
   }
 
@@ -59,7 +59,11 @@ export default function AddCarScreen() {
     }
     setLoading(true);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const car = await addCar({ plate: plate.trim().toUpperCase(), type, color });
+    const car = await addCar({
+      plate: plate.trim().toUpperCase(),
+      type,
+      color,
+    });
     setLoading(false);
     router.replace({
       pathname: '/(main)/qr-display',
@@ -77,7 +81,7 @@ export default function AddCarScreen() {
         >
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </Pressable>
-        <Text style={styles.title}>إضافة سيارة</Text>
+        <Text style={styles.title}>Add Car</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -88,10 +92,10 @@ export default function AddCarScreen() {
       >
         {/* Plate number */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>رقم اللوحة *</Text>
+          <Text style={styles.fieldLabel}>License Plate *</Text>
           <TextInput
             style={[styles.input, errors.plate && styles.inputError]}
-            placeholder="مثال: أ ب ج 1234"
+            placeholder="e.g. ABC 1234"
             placeholderTextColor="#4a8a82"
             value={plate}
             onChangeText={t => {
@@ -108,7 +112,7 @@ export default function AddCarScreen() {
 
         {/* Car type */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>نوع السيارة (اختياري)</Text>
+          <Text style={styles.fieldLabel}>Car Type (optional)</Text>
           <View style={styles.chips}>
             {CAR_TYPES.map(t => (
               <Pressable
@@ -124,10 +128,7 @@ export default function AddCarScreen() {
                 }}
               >
                 <Text
-                  style={[
-                    styles.chipText,
-                    type === t && styles.chipTextSelected,
-                  ]}
+                  style={[styles.chipText, type === t && styles.chipTextSelected]}
                 >
                   {t}
                 </Text>
@@ -138,7 +139,7 @@ export default function AddCarScreen() {
 
         {/* Car color */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>لون السيارة (اختياري)</Text>
+          <Text style={styles.fieldLabel}>Car Color (optional)</Text>
           <View style={styles.colorGrid}>
             {COLORS.map(c => (
               <Pressable
@@ -181,7 +182,7 @@ export default function AddCarScreen() {
           ) : (
             <>
               <Ionicons name="qr-code" size={20} color="#082926" />
-              <Text style={styles.buttonText}>توليد QR</Text>
+              <Text style={styles.buttonText}>Generate QR Code</Text>
             </>
           )}
         </Pressable>
@@ -222,7 +223,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
     color: '#7fb5ae',
-    textAlign: 'right',
   },
   input: {
     backgroundColor: '#0e3b33',
@@ -235,20 +235,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
     letterSpacing: 2,
-    textAlign: 'right',
   },
   inputError: { borderColor: '#ef4444' },
   error: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     color: '#ef4444',
-    textAlign: 'right',
   },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    justifyContent: 'flex-end',
   },
   chip: {
     paddingHorizontal: 16,
@@ -258,10 +255,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1a5048',
   },
-  chipSelected: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FFFFFF',
-  },
+  chipSelected: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
   chipText: {
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
@@ -272,13 +266,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    justifyContent: 'flex-end',
   },
-  colorItem: {
-    alignItems: 'center',
-    gap: 4,
-    opacity: 0.75,
-  },
+  colorItem: { alignItems: 'center', gap: 4, opacity: 0.75 },
   colorItemSelected: { opacity: 1 },
   colorSwatch: {
     width: 40,

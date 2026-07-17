@@ -37,7 +37,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "نحتاج إذن الكاميرا لمسح كود QR الخاص بالسيارة"
+          "cameraPermission": "Qar needs camera access to scan car QR codes"
         }
       ]
     ],

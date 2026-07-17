@@ -59,7 +59,7 @@ export default function OtpScreen() {
     if (!isComplete) return;
     setLoading(true);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Simulate OTP verification — in production replace with Firebase Phone Auth
+    // Simulate OTP verification — replace with Firebase Phone Auth in production
     await new Promise(r => setTimeout(r, 1500));
     const userId =
       Date.now().toString() + Math.random().toString(36).substr(2, 6);
@@ -102,9 +102,9 @@ export default function OtpScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>كود التحقق</Text>
+          <Text style={styles.title}>Verification Code</Text>
           <Text style={styles.subtitle}>
-            أرسلنا كود مكوّن من 4 أرقام إلى
+            We sent a 4-digit code to
           </Text>
           <Text style={styles.phone}>{maskedPhone}</Text>
         </View>
@@ -146,7 +146,7 @@ export default function OtpScreen() {
           {loading ? (
             <ActivityIndicator color="#082926" />
           ) : (
-            <Text style={styles.buttonText}>تأكيد</Text>
+            <Text style={styles.buttonText}>Confirm</Text>
           )}
         </Pressable>
 
@@ -160,8 +160,8 @@ export default function OtpScreen() {
             style={[styles.resendText, resendTimer > 0 && styles.resendDisabled]}
           >
             {resendTimer > 0
-              ? `إعادة الإرسال بعد ${resendTimer}ث`
-              : 'إعادة إرسال الكود'}
+              ? `Resend code in ${resendTimer}s`
+              : 'Resend code'}
           </Text>
         </Pressable>
       </View>

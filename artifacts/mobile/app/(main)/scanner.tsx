@@ -40,51 +40,36 @@ export default function ScannerScreen() {
         return;
       }
     } catch {
-      // not JSON, treat as plain text
+      // not a Qar QR code
     }
 
-    // Unrecognized QR — go back
     router.back();
   }
 
-  // Permission handling
   if (!permission) {
     return (
-      <View
-        style={[
-          styles.center,
-          { paddingTop: topPad, paddingBottom: botPad },
-        ]}
-      >
-        <Text style={styles.permText}>جاري التحقق من الأذونات...</Text>
+      <View style={[styles.center, { paddingTop: topPad, paddingBottom: botPad }]}>
+        <Text style={styles.permText}>Checking permissions...</Text>
       </View>
     );
   }
 
   if (!permission.granted) {
     return (
-      <View
-        style={[
-          styles.center,
-          { paddingTop: topPad, paddingBottom: botPad },
-        ]}
-      >
+      <View style={[styles.center, { paddingTop: topPad, paddingBottom: botPad }]}>
         <Ionicons name="camera-outline" size={64} color="#1a5048" />
-        <Text style={styles.permTitle}>إذن الكاميرا مطلوب</Text>
+        <Text style={styles.permTitle}>Camera Access Required</Text>
         <Text style={styles.permSubtitle}>
-          نحتاج إذن الكاميرا لمسح كود QR
+          We need camera access to scan QR codes
         </Text>
         <Pressable
-          style={({ pressed }) => [
-            styles.permBtn,
-            pressed && { opacity: 0.85 },
-          ]}
+          style={({ pressed }) => [styles.permBtn, pressed && { opacity: 0.85 }]}
           onPress={requestPermission}
         >
-          <Text style={styles.permBtnText}>السماح بالوصول</Text>
+          <Text style={styles.permBtnText}>Allow Access</Text>
         </Pressable>
         <Pressable style={styles.cancelBtn} onPress={() => router.back()}>
-          <Text style={styles.cancelText}>إلغاء</Text>
+          <Text style={styles.cancelText}>Cancel</Text>
         </Pressable>
       </View>
     );
@@ -99,48 +84,38 @@ export default function ScannerScreen() {
         barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
       />
 
-      {/* Overlay */}
       <View style={styles.overlay}>
         {/* Top bar */}
         <View style={[styles.topBar, { paddingTop: topPad + 8 }]}>
           <Pressable
-            style={({ pressed }) => [
-              styles.closeBtn,
-              pressed && { opacity: 0.7 },
-            ]}
+            style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
             onPress={() => router.back()}
           >
             <Ionicons name="close" size={26} color="#FFFFFF" />
           </Pressable>
-          <Text style={styles.scanTitle}>امسح كود QR</Text>
+          <Text style={styles.scanTitle}>Scan QR Code</Text>
           <View style={{ width: 44 }} />
         </View>
 
-        {/* Scan frame */}
+        {/* Frame */}
         <View style={styles.frameArea}>
           <View style={styles.frame}>
-            {/* Frame corners */}
             <View style={[styles.fc, styles.fcTL]} />
             <View style={[styles.fc, styles.fcTR]} />
             <View style={[styles.fc, styles.fcBL]} />
             <View style={[styles.fc, styles.fcBR]} />
           </View>
-          <Text style={styles.hint}>وجّه الكاميرا نحو كود QR الخاص بالسيارة</Text>
+          <Text style={styles.hint}>Point the camera at a Qar QR code</Text>
         </View>
 
         {/* Bottom */}
-        <View
-          style={[styles.bottomArea, { paddingBottom: botPad + 16 }]}
-        >
+        <View style={[styles.bottomArea, { paddingBottom: botPad + 16 }]}>
           {scanned && (
             <Pressable
-              style={({ pressed }) => [
-                styles.rescanBtn,
-                pressed && { opacity: 0.85 },
-              ]}
+              style={({ pressed }) => [styles.rescanBtn, pressed && { opacity: 0.85 }]}
               onPress={() => setScanned(false)}
             >
-              <Text style={styles.rescanText}>مسح مجدداً</Text>
+              <Text style={styles.rescanText}>Scan Again</Text>
             </Pressable>
           )}
         </View>
@@ -217,21 +192,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     color: '#FFFFFF',
   },
-  frameArea: {
-    alignItems: 'center',
-    gap: 20,
-  },
-  frame: {
-    width: 240,
-    height: 240,
-    position: 'relative',
-  },
-  fc: {
-    position: 'absolute',
-    width: 32,
-    height: 32,
-    borderColor: '#FFFFFF',
-  },
+  frameArea: { alignItems: 'center', gap: 20 },
+  frame: { width: 240, height: 240, position: 'relative' },
+  fc: { position: 'absolute', width: 32, height: 32, borderColor: '#FFFFFF' },
   fcTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 8 },
   fcTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 8 },
   fcBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 8 },

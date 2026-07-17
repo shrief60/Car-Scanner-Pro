@@ -24,22 +24,22 @@ const ALERTS = [
   {
     id: 'blocked' as AlertType,
     icon: 'car-sport',
-    label: 'قافل عليّا',
-    description: 'السيارة مقفلة على سيارتك',
+    label: 'Blocking My Car',
+    description: 'This car is blocking me in',
     color: '#1e6b60',
   },
   {
     id: 'lights' as AlertType,
     icon: 'flash',
-    label: 'النور شغال',
-    description: 'الأنوار مضاءة',
+    label: 'Lights Are On',
+    description: 'Car headlights are still on',
     color: '#d97706',
   },
   {
     id: 'danger' as AlertType,
     icon: 'warning',
-    label: 'في خطر',
-    description: 'خطر حول السيارة',
+    label: 'Danger Nearby',
+    description: 'There is a hazard around the car',
     color: '#ef4444',
   },
 ];
@@ -122,7 +122,7 @@ export default function ScanNotificationScreen() {
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
-  async function handleAlert(type: AlertType) {
+  function handleAlert(type: AlertType) {
     setSentAlert(type);
     setShowSuccess(true);
   }
@@ -142,10 +142,7 @@ export default function ScanNotificationScreen() {
         {/* Close */}
         <View style={styles.topRow}>
           <Pressable
-            style={({ pressed }) => [
-              styles.closeBtn,
-              pressed && { opacity: 0.7 },
-            ]}
+            style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
             onPress={() => router.back()}
           >
             <Ionicons name="close" size={24} color="#FFFFFF" />
@@ -157,7 +154,7 @@ export default function ScanNotificationScreen() {
           <View style={styles.carIconBg}>
             <Ionicons name="car" size={36} color="#7fb5ae" />
           </View>
-          <Text style={styles.question}>عربية محتاج صاحبها؟</Text>
+          <Text style={styles.question}>Need to reach the car owner?</Text>
           {plate ? (
             <View style={styles.plateRow}>
               <View style={styles.plateBadge}>
@@ -176,13 +173,13 @@ export default function ScanNotificationScreen() {
         {showSuccess && (
           <View style={styles.successBanner}>
             <Ionicons name="checkmark-circle" size={20} color="#4ade80" />
-            <Text style={styles.successText}>تم إرسال التنبيه بنجاح</Text>
+            <Text style={styles.successText}>Alert sent successfully</Text>
           </View>
         )}
 
         {/* Alert buttons */}
         <View style={styles.alerts}>
-          <Text style={styles.alertsTitle}>اختر نوع التنبيه</Text>
+          <Text style={styles.alertsTitle}>Choose an alert type</Text>
           {ALERTS.map(a => (
             <AlertButton
               key={a.id}
@@ -197,7 +194,7 @@ export default function ScanNotificationScreen() {
         <View style={styles.privacyNote}>
           <Ionicons name="lock-closed" size={14} color="#4a8a82" />
           <Text style={styles.privacyText}>
-            رقم الهاتف محمي تماماً — لن يتم الكشف عنه
+            Phone number is fully protected — it will never be revealed
           </Text>
         </View>
       </View>
@@ -212,10 +209,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     gap: 20,
   },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
+  topRow: { flexDirection: 'row', justifyContent: 'flex-end' },
   closeBtn: {
     width: 40,
     height: 40,
@@ -224,10 +218,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  carSection: {
-    alignItems: 'center',
-    gap: 10,
-  },
+  carSection: { alignItems: 'center', gap: 10 },
   carIconBg: {
     width: 80,
     height: 80,
@@ -285,7 +276,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_500Medium',
     color: '#7fb5ae',
-    textAlign: 'right',
   },
   alertBtn: {
     backgroundColor: '#0e3b33',
@@ -297,9 +287,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1a5048',
   },
-  alertBtnSent: {
-    opacity: 0.6,
-  },
+  alertBtnSent: { opacity: 0.6 },
   alertIconBg: {
     width: 52,
     height: 52,
@@ -312,14 +300,12 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
-    textAlign: 'right',
   },
   alertLabelSent: { color: '#7fb5ae' },
   alertDesc: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
     color: '#7fb5ae',
-    textAlign: 'right',
     marginTop: 2,
   },
   privacyNote: {

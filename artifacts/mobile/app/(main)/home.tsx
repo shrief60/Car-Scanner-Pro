@@ -30,12 +30,8 @@ function CarCard({ car }: { car: Car }) {
           <Text style={styles.plateText}>{car.plate}</Text>
         </View>
         <View style={styles.cardInfo}>
-          {car.type ? (
-            <Text style={styles.cardMeta}>{car.type}</Text>
-          ) : null}
-          {car.color ? (
-            <Text style={styles.cardMeta}>{car.color}</Text>
-          ) : null}
+          {car.type ? <Text style={styles.cardMeta}>{car.type}</Text> : null}
+          {car.color ? <Text style={styles.cardMeta}>{car.color}</Text> : null}
         </View>
       </View>
       <Pressable
@@ -68,15 +64,12 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <View>
-          <Text style={styles.greeting}>أهلاً بك</Text>
+          <Text style={styles.greeting}>Welcome back</Text>
           <Text style={styles.phone}>{phone}</Text>
         </View>
         <View style={styles.headerActions}>
           <Pressable
-            style={({ pressed }) => [
-              styles.iconBtn,
-              pressed && { opacity: 0.7 },
-            ]}
+            style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push('/(main)/scanner');
@@ -85,10 +78,7 @@ export default function HomeScreen() {
             <Ionicons name="scan-outline" size={24} color="#FFFFFF" />
           </Pressable>
           <Pressable
-            style={({ pressed }) => [
-              styles.iconBtn,
-              pressed && { opacity: 0.7 },
-            ]}
+            style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.7 }]}
             onPress={handleLogout}
           >
             <Ionicons name="log-out-outline" size={24} color="#7fb5ae" />
@@ -98,27 +88,24 @@ export default function HomeScreen() {
 
       {/* Logo bar */}
       <View style={styles.logoBar}>
-        <Text style={styles.logoText}>قار</Text>
-        <Text style={styles.logoSub}>سياراتي</Text>
+        <Text style={styles.logoText}>Qar</Text>
+        <Text style={styles.logoSub}>My Cars</Text>
       </View>
 
       {/* Cars list */}
       <FlatList
         data={cars}
         keyExtractor={c => c.id}
-        contentContainerStyle={[
-          styles.list,
-          { paddingBottom: botPad + 100 },
-        ]}
+        contentContainerStyle={[styles.list, { paddingBottom: botPad + 100 }]}
         scrollEnabled={cars.length > 0}
         renderItem={({ item }) => <CarCard car={item} />}
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
               <Ionicons name="car-outline" size={64} color="#1a5048" />
-              <Text style={styles.emptyTitle}>لا توجد سيارات بعد</Text>
+              <Text style={styles.emptyTitle}>No cars yet</Text>
               <Text style={styles.emptySubtitle}>
-                أضف سيارتك وأنشئ كود QR خاص بها
+                Add your car and generate a unique QR code for it
               </Text>
             </View>
           ) : null
