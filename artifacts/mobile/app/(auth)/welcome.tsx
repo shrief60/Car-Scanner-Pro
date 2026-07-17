@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -37,10 +38,13 @@ export default function WelcomeScreen() {
       >
         {/* Logo */}
         <View style={styles.logoSection}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoQ}>Q</Text>
+          <View style={styles.logoCard}>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.logoImage}
+              resizeMode="cover"
+            />
           </View>
-          <Text style={styles.appName}>Qar</Text>
           <Text style={styles.tagline}>Smart QR management for your car</Text>
         </View>
 
@@ -120,30 +124,22 @@ const styles = StyleSheet.create({
   logoSection: {
     alignItems: 'center',
     marginTop: 20,
-    gap: 8,
+    gap: 10,
   },
-  logoCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 4,
+  logoCard: {
+    width: 160,
+    height: 160,
+    borderRadius: 32,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  logoQ: {
-    fontSize: 48,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    letterSpacing: -1,
-  },
-  appName: {
-    fontSize: 40,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    letterSpacing: 3,
+  logoImage: {
+    width: 160,
+    height: 160,
   },
   tagline: {
     fontSize: 15,

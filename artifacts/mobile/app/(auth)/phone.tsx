@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -56,10 +57,13 @@ export default function PhoneScreen() {
         >
           {/* Logo */}
           <View style={styles.logoSection}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoQ}>Q</Text>
+            <View style={styles.logoCard}>
+              <Image
+                source={require('@/assets/images/logo.png')}
+                style={styles.logoImage}
+                resizeMode="cover"
+              />
             </View>
-            <Text style={styles.appName}>Qar</Text>
             <Text style={styles.tagline}>Get there in seconds</Text>
           </View>
 
@@ -123,30 +127,23 @@ const styles = StyleSheet.create({
   },
   logoSection: {
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 20,
+    gap: 8,
   },
-  logoCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
+  logoCard: {
+    width: 140,
+    height: 140,
+    borderRadius: 28,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  logoQ: {
-    fontSize: 42,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    letterSpacing: -1,
-  },
-  appName: {
-    fontSize: 36,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    letterSpacing: 2,
+  logoImage: {
+    width: 140,
+    height: 140,
   },
   tagline: {
     fontSize: 16,
