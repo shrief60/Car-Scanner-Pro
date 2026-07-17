@@ -47,7 +47,7 @@ function CarCard({ car }: { car: Car }) {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { phone, logout } = useAuth();
+  const { phone, username, authMethod, logout } = useAuth();
   const { cars, isLoading } = useCars();
 
   async function handleLogout() {
@@ -65,7 +65,9 @@ export default function HomeScreen() {
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <View>
           <Text style={styles.greeting}>Welcome back</Text>
-          <Text style={styles.phone}>{phone}</Text>
+          <Text style={styles.phone}>
+            {authMethod === 'password' ? username : phone}
+          </Text>
         </View>
         <View style={styles.headerActions}>
           <Pressable
