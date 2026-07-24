@@ -39,6 +39,13 @@
         {
           "cameraPermission": "Qar needs camera access to scan car QR codes"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Qar needs access to your photos to attach a car image",
+          "cameraPermission": "Qar needs camera access to take a photo of your car"
+        }
       ]
     ],
     "experiments": {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -13,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { useCars } from '@/context/CarsContext';
 
 const COLORS = [
@@ -28,6 +30,12 @@ const COLORS = [
   { label: 'Orange', hex: '#fb8c00' },
 ];
 
+interface PickedPhoto {
+  uri: string;
+  name: string;
+  type: string;
+}
+
 export default function AddCarScreen() {
   const insets = useSafeAreaInsets();
   const { addCar } = useCars();
@@ -36,11 +44,62 @@ export default function AddCarScreen() {
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
   const [color, setColor] = useState('');
+  const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
+
+  // ── Image picker ────────────────────────────────────────────────────────────
+
+  async function pickFromGallery() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      setErrors(p => ({ ...p, photo: 'Gallery permission is required' }));
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      const ext = asset.uri.split('.').pop() ?? 'jpg';
+      setPhoto({ uri: asset.uri, name: `car_photo.${ext}`, type: asset.mimeType ?? `image/${ext}` });
+      setErrors(p => ({ ...p, photo: '' }));
+      Haptics.selectionAsync();
+    }
+  }
+
+  async function pickFromCamera() {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      setErrors(p => ({ ...p, photo: 'Camera permission is required' }));
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      const ext = asset.uri.split('.').pop() ?? 'jpg';
+      setPhoto({ uri: asset.uri, name: `car_photo.${ext}`, type: asset.mimeType ?? `image/${ext}` });
+      setErrors(p => ({ ...p, photo: '' }));
+      Haptics.selectionAsync();
+    }
+  }
+
+  function removePhoto() {
+    setPhoto(null);
+    Haptics.selectionAsync();
+  }
+
+  // ── Submit ──────────────────────────────────────────────────────────────────
 
   async function handleSubmit() {
     if (!plate.trim()) {
@@ -56,6 +115,7 @@ export default function AddCarScreen() {
         make: make.trim() || undefined,
         model: model.trim() || undefined,
         color: color || undefined,
+        photo: photo ?? undefined,
       });
       router.replace({
         pathname: '/(main)/qr-display',
@@ -74,6 +134,8 @@ export default function AddCarScreen() {
       setLoading(false);
     }
   }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <View style={[styles.container, { paddingTop: topPad }]}>
@@ -94,7 +156,50 @@ export default function AddCarScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Plate number */}
+        {/* ── Car photo ─────────────────────────────────────────────────────── */}
+        <View style={styles.field}>
+          <Text style={styles.fieldLabel}>Car Photo (optional)</Text>
+
+          {photo ? (
+            /* Preview with remove button */
+            <View style={styles.photoPreviewWrapper}>
+              <Image source={{ uri: photo.uri }} style={styles.photoPreview} resizeMode="cover" />
+              <Pressable style={styles.removePhotoBtn} onPress={removePhoto}>
+                <Ionicons name="close-circle" size={28} color="#ef4444" />
+              </Pressable>
+              {/* Re-pick overlay */}
+              <Pressable style={styles.rePickOverlay} onPress={pickFromGallery}>
+                <Ionicons name="pencil" size={16} color="#FFFFFF" />
+                <Text style={styles.rePickText}>Change</Text>
+              </Pressable>
+            </View>
+          ) : (
+            /* Picker buttons */
+            <View style={styles.photoPickRow}>
+              <Pressable
+                style={({ pressed }) => [styles.photoPickBtn, pressed && { opacity: 0.75 }]}
+                onPress={pickFromGallery}
+              >
+                <Ionicons name="images-outline" size={26} color="#7fb5ae" />
+                <Text style={styles.photoPickLabel}>Gallery</Text>
+              </Pressable>
+
+              <View style={styles.photoPickDivider} />
+
+              <Pressable
+                style={({ pressed }) => [styles.photoPickBtn, pressed && { opacity: 0.75 }]}
+                onPress={pickFromCamera}
+              >
+                <Ionicons name="camera-outline" size={26} color="#7fb5ae" />
+                <Text style={styles.photoPickLabel}>Camera</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {errors.photo ? <Text style={styles.error}>{errors.photo}</Text> : null}
+        </View>
+
+        {/* ── License plate ─────────────────────────────────────────────────── */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>License Plate *</Text>
           <TextInput
@@ -109,7 +214,7 @@ export default function AddCarScreen() {
           {errors.plate ? <Text style={styles.error}>{errors.plate}</Text> : null}
         </View>
 
-        {/* Make */}
+        {/* ── Make ─────────────────────────────────────────────────────────── */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Make (Brand)</Text>
           <TextInput
@@ -122,7 +227,7 @@ export default function AddCarScreen() {
           />
         </View>
 
-        {/* Model */}
+        {/* ── Model ────────────────────────────────────────────────────────── */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Model</Text>
           <TextInput
@@ -135,7 +240,7 @@ export default function AddCarScreen() {
           />
         </View>
 
-        {/* Car color */}
+        {/* ── Color ────────────────────────────────────────────────────────── */}
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Color (optional)</Text>
           <View style={styles.colorGrid}>
@@ -165,7 +270,7 @@ export default function AddCarScreen() {
           </View>
         </View>
 
-        {/* General error */}
+        {/* ── General error ─────────────────────────────────────────────────── */}
         {errors.general ? (
           <View style={styles.errorBox}>
             <Ionicons name="alert-circle" size={16} color="#ef4444" />
@@ -173,7 +278,7 @@ export default function AddCarScreen() {
           </View>
         ) : null}
 
-        {/* Submit */}
+        {/* ── Submit ────────────────────────────────────────────────────────── */}
         <Pressable
           style={({ pressed }) => [
             styles.button,
@@ -212,6 +317,45 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 8, gap: 24 },
   field: { gap: 10 },
   fieldLabel: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
+
+  // Photo picker
+  photoPickRow: {
+    flexDirection: 'row',
+    backgroundColor: '#0e3b33',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1a5048',
+    overflow: 'hidden',
+    height: 110,
+  },
+  photoPickBtn: {
+    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8,
+  },
+  photoPickDivider: { width: 1, backgroundColor: '#1a5048' },
+  photoPickLabel: { fontSize: 13, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
+
+  // Photo preview
+  photoPreviewWrapper: {
+    height: 180,
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  photoPreview: { width: '100%', height: '100%' },
+  removePhotoBtn: {
+    position: 'absolute', top: 8, right: 8,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 14,
+  },
+  rePickOverlay: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingVertical: 10,
+  },
+  rePickText: { fontSize: 13, fontFamily: 'Inter_500Medium', color: '#FFFFFF' },
+
+  // Text inputs
   input: {
     backgroundColor: '#0e3b33', borderWidth: 1, borderColor: '#1a5048',
     borderRadius: 14, paddingHorizontal: 18, paddingVertical: 16,
@@ -219,6 +363,8 @@ const styles = StyleSheet.create({
   },
   inputError: { borderColor: '#ef4444' },
   error: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#ef4444' },
+
+  // Color swatches
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   colorItem: { alignItems: 'center', gap: 4, opacity: 0.75 },
   colorItemSelected: { opacity: 1 },
@@ -228,12 +374,16 @@ const styles = StyleSheet.create({
   },
   swatchSelected: { borderColor: '#FFFFFF', transform: [{ scale: 1.15 }] },
   colorLabel: { fontSize: 11, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+
+  // General error
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 12,
     borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
   },
   errorGeneral: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444' },
+
+  // Submit button
   button: {
     backgroundColor: '#FFFFFF', borderRadius: 14, paddingVertical: 18,
     alignItems: 'center', flexDirection: 'row', justifyContent: 'center',
