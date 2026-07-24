@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setToken } from '@/services/api';
+import {
+  otpRegister,
+  otpLogin,
+  passwordRegister,
+  passwordLogin,
+  logoutApi,
+} from '@/services/auth';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -7,36 +15,44 @@ export type AuthMethod = 'phone' | 'password';
 
 interface AuthState {
   isAuthenticated: boolean;
-  userId: string | null;
+  userId: number | null;
   phone: string | null;
-  username: string | null;
+  username: string | null; // display name from server
+  email: string | null;
   authMethod: AuthMethod | null;
   isLoading: boolean;
 }
 
-interface StoredUser {
-  userId: string;
-  username: string;
-  password: string; // plain text — replace with bcrypt in production
+interface SessionData {
+  isAuthenticated: boolean;
+  userId: number;
+  phone: string | null;
+  username: string | null;
+  email: string | null;
+  authMethod: AuthMethod;
+  token: string;
 }
 
 interface AuthContextType extends AuthState {
-  /** Phone OTP flow */
-  login: (phone: string, userId: string) => Promise<void>;
-  /** Username/password flows */
-  register: (username: string, password: string) => Promise<void>;
-  loginWithPassword: (username: string, password: string) => Promise<void>;
+  /** OTP register — new phone user */
+  loginWithOtp: (phone: string, code: string, isNew: boolean) => Promise<void>;
+  /** Password register */
+  register: (params: {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+    phone?: string;
+  }) => Promise<void>;
+  /** Password login */
+  loginWithPassword: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
-// ─── Storage keys ─────────────────────────────────────────────────────────────
-
-const SESSION_KEY = '@qar_auth';
-const USERS_KEY = '@qar_users';
-
-// ─── Context ──────────────────────────────────────────────────────────────────
-
 const AuthContext = createContext<AuthContextType | null>(null);
+const SESSION_KEY = '@qar_session_v2';
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
@@ -44,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userId: null,
     phone: null,
     username: null,
+    email: null,
     authMethod: null,
     isLoading: true,
   });
@@ -52,32 +69,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadSession();
   }, []);
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  async function getUsers(): Promise<StoredUser[]> {
-    try {
-      const raw = await AsyncStorage.getItem(USERS_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  async function saveUsers(users: StoredUser[]) {
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-  }
-
   async function loadSession() {
     try {
       const raw = await AsyncStorage.getItem(SESSION_KEY);
       if (raw) {
-        const session = JSON.parse(raw) as Partial<AuthState>;
+        const session: SessionData = JSON.parse(raw);
+        setToken(session.token); // hydrate API client
         setState({
           isAuthenticated: true,
-          userId: session.userId ?? null,
-          phone: session.phone ?? null,
-          username: session.username ?? null,
-          authMethod: session.authMethod ?? null,
+          userId: session.userId,
+          phone: session.phone,
+          username: session.username,
+          email: session.email,
+          authMethod: session.authMethod,
           isLoading: false,
         });
       } else {
@@ -88,70 +92,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function persistSession(partial: Omit<AuthState, 'isLoading'>) {
-    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(partial));
-    setState({ ...partial, isLoading: false });
+  async function persistSession(session: SessionData) {
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    setToken(session.token);
+    setState({
+      isAuthenticated: true,
+      userId: session.userId,
+      phone: session.phone,
+      username: session.username,
+      email: session.email,
+      authMethod: session.authMethod,
+      isLoading: false,
+    });
   }
 
-  // ── Auth methods ───────────────────────────────────────────────────────────
+  // ── Auth methods ─────────────────────────────────────────────────────────────
 
-  /** Phone OTP login (simulated) */
-  async function login(phone: string, userId: string) {
+  async function loginWithOtp(
+    phone: string,
+    code: string,
+    isNew: boolean,
+  ) {
+    const res = isNew
+      ? await otpRegister(phone, code)
+      : await otpLogin(phone, code);
+
     await persistSession({
       isAuthenticated: true,
-      userId,
+      userId: res.user.id,
       phone,
-      username: null,
+      username: res.user.name ?? null,
+      email: res.user.email ?? null,
       authMethod: 'phone',
+      token: res.token,
     });
   }
 
-  /** Create a new account with username + password */
-  async function register(username: string, password: string) {
-    const users = await getUsers();
-    const exists = users.some(
-      u => u.username.toLowerCase() === username.toLowerCase(),
-    );
-    if (exists) throw new Error('Username already taken');
-
-    const userId =
-      Date.now().toString() + Math.random().toString(36).substr(2, 6);
-    await saveUsers([...users, { userId, username, password }]);
-
+  async function register(params: {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+    phone?: string;
+  }) {
+    const res = await passwordRegister(params);
     await persistSession({
       isAuthenticated: true,
-      userId,
-      phone: null,
-      username,
+      userId: res.user.id,
+      phone: params.phone ?? null,
+      username: res.user.name,
+      email: res.user.email ?? params.email,
       authMethod: 'password',
+      token: res.token,
     });
   }
 
-  /** Sign in with username + password */
-  async function loginWithPassword(username: string, password: string) {
-    const users = await getUsers();
-    const user = users.find(
-      u => u.username.toLowerCase() === username.toLowerCase(),
-    );
-    if (!user) throw new Error('Username not found');
-    if (user.password !== password) throw new Error('Incorrect password');
-
+  async function loginWithPassword(email: string, password: string) {
+    const res = await passwordLogin(email, password);
     await persistSession({
       isAuthenticated: true,
-      userId: user.userId,
-      phone: null,
-      username: user.username,
+      userId: res.user.id,
+      phone: res.user.phone ?? null,
+      username: res.user.name,
+      email: email,
       authMethod: 'password',
+      token: res.token,
     });
   }
 
   async function logout() {
+    try {
+      await logoutApi();
+    } catch {
+      // ignore server errors on logout
+    }
+    setToken(null);
     await AsyncStorage.removeItem(SESSION_KEY);
     setState({
       isAuthenticated: false,
       userId: null,
       phone: null,
       username: null,
+      email: null,
       authMethod: null,
       isLoading: false,
     });
@@ -159,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ ...state, login, register, loginWithPassword, logout }}
+      value={{ ...state, loginWithOtp, register, loginWithPassword, logout }}
     >
       {children}
     </AuthContext.Provider>

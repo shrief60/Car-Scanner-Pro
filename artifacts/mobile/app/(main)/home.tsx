@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   FlatList,
   Platform,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -19,7 +20,14 @@ function CarCard({ car }: { car: Car }) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push({
       pathname: '/(main)/qr-display',
-      params: { id: car.id, plate: car.plate, type: car.type, color: car.color },
+      params: {
+        id: String(car.id),
+        plate: car.plate_number,
+        make: car.make ?? '',
+        model: car.model ?? '',
+        color: car.color ?? '',
+        qrCode: car.qr_code,
+      },
     });
   }
 
@@ -27,10 +35,10 @@ function CarCard({ car }: { car: Car }) {
     <View style={styles.card}>
       <View style={styles.cardLeft}>
         <View style={styles.plateBox}>
-          <Text style={styles.plateText}>{car.plate}</Text>
+          <Text style={styles.plateText}>{car.plate_number}</Text>
         </View>
         <View style={styles.cardInfo}>
-          {car.type ? <Text style={styles.cardMeta}>{car.type}</Text> : null}
+          {car.make ? <Text style={styles.cardMeta}>{car.make}{car.model ? ` ${car.model}` : ''}</Text> : null}
           {car.color ? <Text style={styles.cardMeta}>{car.color}</Text> : null}
         </View>
       </View>
@@ -48,16 +56,21 @@ function CarCard({ car }: { car: Car }) {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { phone, username, authMethod, logout } = useAuth();
-  const { cars, isLoading } = useCars();
+  const { cars, isLoading, error, fetchCars } = useCars();
+
+  useEffect(() => {
+    fetchCars();
+  }, []);
 
   async function handleLogout() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await logout();
-    router.replace('/(auth)/phone');
+    router.replace('/(auth)/welcome');
   }
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
+  const displayName = authMethod === 'password' ? username : phone;
 
   return (
     <View style={styles.container}>
@@ -65,9 +78,7 @@ export default function HomeScreen() {
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <View>
           <Text style={styles.greeting}>Welcome back</Text>
-          <Text style={styles.phone}>
-            {authMethod === 'password' ? username : phone}
-          </Text>
+          <Text style={styles.phone}>{displayName}</Text>
         </View>
         <View style={styles.headerActions}>
           <Pressable
@@ -94,15 +105,32 @@ export default function HomeScreen() {
         <Text style={styles.logoSub}>My Cars</Text>
       </View>
 
+      {/* Error */}
+      {error ? (
+        <View style={styles.errorBanner}>
+          <Ionicons name="alert-circle" size={16} color="#ef4444" />
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable onPress={fetchCars}>
+            <Text style={styles.retryText}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       {/* Cars list */}
-      <FlatList
-        data={cars}
-        keyExtractor={c => c.id}
-        contentContainerStyle={[styles.list, { paddingBottom: botPad + 100 }]}
-        scrollEnabled={cars.length > 0}
-        renderItem={({ item }) => <CarCard car={item} />}
-        ListEmptyComponent={
-          !isLoading ? (
+      {isLoading && cars.length === 0 ? (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color="#7fb5ae" />
+          <Text style={styles.loadingText}>Loading your cars…</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={cars}
+          keyExtractor={c => String(c.id)}
+          contentContainerStyle={[styles.list, { paddingBottom: botPad + 100 }]}
+          renderItem={({ item }) => <CarCard car={item} />}
+          onRefresh={fetchCars}
+          refreshing={isLoading}
+          ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="car-outline" size={64} color="#1a5048" />
               <Text style={styles.emptyTitle}>No cars yet</Text>
@@ -110,9 +138,9 @@ export default function HomeScreen() {
                 Add your car and generate a unique QR code for it
               </Text>
             </View>
-          ) : null
-        }
-      />
+          }
+        />
+      )}
 
       {/* FAB */}
       <Pressable
@@ -135,136 +163,64 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#082926' },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'flex-start', paddingHorizontal: 20, paddingBottom: 12,
   },
-  greeting: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: '#7fb5ae',
-  },
-  phone: {
-    fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  greeting: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  phone: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
+  headerActions: { flexDirection: 'row', gap: 8 },
   iconBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 42, height: 42, borderRadius: 21,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
   },
   logoBar: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 10,
+    paddingHorizontal: 20, paddingBottom: 20,
+    flexDirection: 'row', alignItems: 'baseline', gap: 10,
   },
-  logoText: {
-    fontSize: 32,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    letterSpacing: 2,
+  logoText: { fontSize: 32, fontFamily: 'Inter_700Bold', color: '#FFFFFF', letterSpacing: 2 },
+  logoSub: { fontSize: 16, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  errorBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'rgba(239,68,68,0.1)', marginHorizontal: 20,
+    borderRadius: 10, padding: 12, marginBottom: 8,
+    borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
   },
-  logoSub: {
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    color: '#7fb5ae',
-  },
-  list: {
-    paddingHorizontal: 20,
-    paddingTop: 4,
-    gap: 12,
-  },
+  errorText: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444' },
+  retryText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
+  loadingBox: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  loadingText: { fontSize: 14, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  list: { paddingHorizontal: 20, paddingTop: 4, gap: 12 },
   card: {
-    backgroundColor: '#0e3b33',
-    borderRadius: 18,
-    padding: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1a5048',
+    backgroundColor: '#0e3b33', borderRadius: 18, padding: 18,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    borderWidth: 1, borderColor: '#1a5048',
   },
   cardLeft: { gap: 8 },
   plateBox: {
-    backgroundColor: '#082926',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#1a5048',
+    backgroundColor: '#082926', borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 6,
+    alignSelf: 'flex-start', borderWidth: 1, borderColor: '#1a5048',
   },
-  plateText: {
-    fontSize: 20,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    letterSpacing: 2,
-  },
+  plateText: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#FFFFFF', letterSpacing: 2 },
   cardInfo: { gap: 2 },
-  cardMeta: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: '#7fb5ae',
-  },
+  cardMeta: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
   qrBtn: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    alignItems: 'center',
-    gap: 4,
+    backgroundColor: '#FFFFFF', borderRadius: 12,
+    paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', gap: 4,
   },
-  qrBtnText: {
-    fontSize: 11,
-    fontFamily: 'Inter_700Bold',
-    color: '#082926',
-  },
-  empty: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 80,
-    gap: 12,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
+  qrBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#082926' },
+  empty: { alignItems: 'center', justifyContent: 'center', paddingTop: 80, gap: 12 },
+  emptyTitle: { fontSize: 20, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF', textAlign: 'center' },
   emptySubtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: '#7fb5ae',
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 260,
+    fontSize: 14, fontFamily: 'Inter_400Regular', color: '#7fb5ae',
+    textAlign: 'center', lineHeight: 22, maxWidth: 260,
   },
   fab: {
-    position: 'absolute',
-    right: 24,
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    position: 'absolute', right: 24, width: 62, height: 62, borderRadius: 31,
+    backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
   },
   fabPressed: { transform: [{ scale: 0.94 }] },
 });

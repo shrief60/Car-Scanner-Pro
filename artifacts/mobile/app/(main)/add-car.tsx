@@ -15,21 +15,17 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useCars } from '@/context/CarsContext';
 
-const CAR_TYPES = [
-  'Sedan', 'Hatchback', 'SUV', 'Pickup', 'Minivan', 'Coupe', 'Other',
-];
-
 const COLORS = [
-  { label: 'White',  value: 'White',  hex: '#F5F5F5' },
-  { label: 'Black',  value: 'Black',  hex: '#1a1a1a' },
-  { label: 'Silver', value: 'Silver', hex: '#9e9e9e' },
-  { label: 'Gray',   value: 'Gray',   hex: '#616161' },
-  { label: 'Red',    value: 'Red',    hex: '#e53935' },
-  { label: 'Blue',   value: 'Blue',   hex: '#1e88e5' },
-  { label: 'Green',  value: 'Green',  hex: '#43a047' },
-  { label: 'Brown',  value: 'Brown',  hex: '#795548' },
-  { label: 'Yellow', value: 'Yellow', hex: '#fdd835' },
-  { label: 'Orange', value: 'Orange', hex: '#fb8c00' },
+  { label: 'White',  hex: '#F5F5F5' },
+  { label: 'Black',  hex: '#1a1a1a' },
+  { label: 'Silver', hex: '#9e9e9e' },
+  { label: 'Gray',   hex: '#616161' },
+  { label: 'Red',    hex: '#e53935' },
+  { label: 'Blue',   hex: '#1e88e5' },
+  { label: 'Green',  hex: '#43a047' },
+  { label: 'Brown',  hex: '#795548' },
+  { label: 'Yellow', hex: '#fdd835' },
+  { label: 'Orange', hex: '#fb8c00' },
 ];
 
 export default function AddCarScreen() {
@@ -37,7 +33,8 @@ export default function AddCarScreen() {
   const { addCar } = useCars();
 
   const [plate, setPlate] = useState('');
-  const [type, setType] = useState('');
+  const [make, setMake] = useState('');
+  const [model, setModel] = useState('');
   const [color, setColor] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -45,30 +42,37 @@ export default function AddCarScreen() {
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
-  function validate() {
-    const e: Record<string, string> = {};
-    if (!plate.trim()) e.plate = 'License plate is required';
-    return e;
-  }
-
   async function handleSubmit() {
-    const e = validate();
-    if (Object.keys(e).length) {
-      setErrors(e);
+    if (!plate.trim()) {
+      setErrors({ plate: 'License plate is required' });
       return;
     }
+    setErrors({});
     setLoading(true);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const car = await addCar({
-      plate: plate.trim().toUpperCase(),
-      type,
-      color,
-    });
-    setLoading(false);
-    router.replace({
-      pathname: '/(main)/qr-display',
-      params: { id: car.id, plate: car.plate, type: car.type, color: car.color },
-    });
+    try {
+      const car = await addCar({
+        plate_number: plate.trim().toUpperCase(),
+        make: make.trim() || undefined,
+        model: model.trim() || undefined,
+        color: color || undefined,
+      });
+      router.replace({
+        pathname: '/(main)/qr-display',
+        params: {
+          id: String(car.id),
+          plate: car.plate_number,
+          make: car.make ?? '',
+          model: car.model ?? '',
+          color: car.color ?? '',
+          qrCode: car.qr_code,
+        },
+      });
+    } catch (e: unknown) {
+      setErrors({ general: (e as Error).message ?? 'Failed to create car' });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -98,59 +102,53 @@ export default function AddCarScreen() {
             placeholder="e.g. ABC 1234"
             placeholderTextColor="#4a8a82"
             value={plate}
-            onChangeText={t => {
-              setPlate(t);
-              setErrors(p => ({ ...p, plate: '' }));
-            }}
+            onChangeText={t => { setPlate(t); setErrors(p => ({ ...p, plate: '' })); }}
             autoCapitalize="characters"
             autoFocus
           />
-          {errors.plate ? (
-            <Text style={styles.error}>{errors.plate}</Text>
-          ) : null}
+          {errors.plate ? <Text style={styles.error}>{errors.plate}</Text> : null}
         </View>
 
-        {/* Car type */}
+        {/* Make */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>Car Type (optional)</Text>
-          <View style={styles.chips}>
-            {CAR_TYPES.map(t => (
-              <Pressable
-                key={t}
-                style={({ pressed }) => [
-                  styles.chip,
-                  type === t && styles.chipSelected,
-                  pressed && { opacity: 0.75 },
-                ]}
-                onPress={() => {
-                  setType(type === t ? '' : t);
-                  Haptics.selectionAsync();
-                }}
-              >
-                <Text
-                  style={[styles.chipText, type === t && styles.chipTextSelected]}
-                >
-                  {t}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <Text style={styles.fieldLabel}>Make (Brand)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. Toyota, Kia, Hyundai"
+            placeholderTextColor="#4a8a82"
+            value={make}
+            onChangeText={setMake}
+            autoCapitalize="words"
+          />
+        </View>
+
+        {/* Model */}
+        <View style={styles.field}>
+          <Text style={styles.fieldLabel}>Model</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. Corolla, Sportage, i10"
+            placeholderTextColor="#4a8a82"
+            value={model}
+            onChangeText={setModel}
+            autoCapitalize="words"
+          />
         </View>
 
         {/* Car color */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>Car Color (optional)</Text>
+          <Text style={styles.fieldLabel}>Color (optional)</Text>
           <View style={styles.colorGrid}>
             {COLORS.map(c => (
               <Pressable
-                key={c.value}
+                key={c.label}
                 style={({ pressed }) => [
                   styles.colorItem,
-                  color === c.value && styles.colorItemSelected,
+                  color === c.label && styles.colorItemSelected,
                   pressed && { opacity: 0.8 },
                 ]}
                 onPress={() => {
-                  setColor(color === c.value ? '' : c.value);
+                  setColor(color === c.label ? '' : c.label);
                   Haptics.selectionAsync();
                 }}
               >
@@ -158,7 +156,7 @@ export default function AddCarScreen() {
                   style={[
                     styles.colorSwatch,
                     { backgroundColor: c.hex },
-                    color === c.value && styles.swatchSelected,
+                    color === c.label && styles.swatchSelected,
                   ]}
                 />
                 <Text style={styles.colorLabel}>{c.label}</Text>
@@ -166,6 +164,14 @@ export default function AddCarScreen() {
             ))}
           </View>
         </View>
+
+        {/* General error */}
+        {errors.general ? (
+          <View style={styles.errorBox}>
+            <Ionicons name="alert-circle" size={16} color="#ef4444" />
+            <Text style={styles.errorGeneral}>{errors.general}</Text>
+          </View>
+        ) : null}
 
         {/* Submit */}
         <Pressable
@@ -194,112 +200,46 @@ export default function AddCarScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#082926' },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12,
   },
   backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
   },
-  title: {
-    fontSize: 20,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-  },
-  scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    gap: 28,
-  },
+  title: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  scroll: { paddingHorizontal: 20, paddingTop: 8, gap: 24 },
   field: { gap: 10 },
-  fieldLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#7fb5ae',
-  },
+  fieldLabel: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
   input: {
-    backgroundColor: '#0e3b33',
-    borderWidth: 1,
-    borderColor: '#1a5048',
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    fontSize: 18,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    letterSpacing: 2,
+    backgroundColor: '#0e3b33', borderWidth: 1, borderColor: '#1a5048',
+    borderRadius: 14, paddingHorizontal: 18, paddingVertical: 16,
+    fontSize: 16, fontFamily: 'Inter_500Medium', color: '#FFFFFF',
   },
   inputError: { borderColor: '#ef4444' },
-  error: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    color: '#ef4444',
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: '#0e3b33',
-    borderWidth: 1,
-    borderColor: '#1a5048',
-  },
-  chipSelected: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
-  chipText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#7fb5ae',
-  },
-  chipTextSelected: { color: '#082926' },
-  colorGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
+  error: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#ef4444' },
+  colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   colorItem: { alignItems: 'center', gap: 4, opacity: 0.75 },
   colorItemSelected: { opacity: 1 },
   colorSwatch: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    width: 40, height: 40, borderRadius: 20,
+    borderWidth: 2, borderColor: 'transparent',
   },
-  swatchSelected: {
-    borderColor: '#FFFFFF',
-    transform: [{ scale: 1.15 }],
+  swatchSelected: { borderColor: '#FFFFFF', transform: [{ scale: 1.15 }] },
+  colorLabel: { fontSize: 11, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  errorBox: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 12,
+    borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
   },
-  colorLabel: {
-    fontSize: 11,
-    fontFamily: 'Inter_400Regular',
-    color: '#7fb5ae',
-  },
+  errorGeneral: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444' },
   button: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingVertical: 18,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 8,
+    backgroundColor: '#FFFFFF', borderRadius: 14, paddingVertical: 18,
+    alignItems: 'center', flexDirection: 'row', justifyContent: 'center',
+    gap: 8, marginTop: 8,
   },
   buttonDisabled: { opacity: 0.35 },
   buttonPressed: { opacity: 0.85 },
-  buttonText: {
-    fontSize: 17,
-    fontFamily: 'Inter_700Bold',
-    color: '#082926',
-  },
+  buttonText: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#082926' },
 });

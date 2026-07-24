@@ -14,11 +14,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
+import { sendOtpChallenge } from '@/services/auth';
 
 export default function OtpScreen() {
   const insets = useSafeAreaInsets();
-  const { phone } = useLocalSearchParams<{ phone: string }>();
-  const { login } = useAuth();
+  const { phone, isNew: isNewParam } =
+    useLocalSearchParams<{ phone: string; isNew: string }>();
+  const isNew = isNewParam === '1';
+  const { loginWithOtp } = useAuth();
 
   const [digits, setDigits] = useState<string[]>(['', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -41,9 +44,7 @@ export default function OtpScreen() {
     next[idx] = d;
     setDigits(next);
     setError('');
-    if (d && idx < 3) {
-      inputs.current[idx + 1]?.focus();
-    }
+    if (d && idx < 3) inputs.current[idx + 1]?.focus();
   }
 
   function handleKeyPress(key: string, idx: number) {
@@ -58,22 +59,30 @@ export default function OtpScreen() {
   async function handleVerify() {
     if (!isComplete) return;
     setLoading(true);
+    setError('');
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Simulate OTP verification — replace with Firebase Phone Auth in production
-    await new Promise(r => setTimeout(r, 1500));
-    const userId =
-      Date.now().toString() + Math.random().toString(36).substr(2, 6);
-    await login(phone ?? '', userId);
-    setLoading(false);
-    router.replace('/(main)/home');
+    try {
+      await loginWithOtp(phone ?? '', code, isNew);
+      router.replace('/(main)/home');
+    } catch (e: unknown) {
+      setError((e as Error).message ?? 'Verification failed');
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleResend() {
     if (resendTimer > 0) return;
-    setResendTimer(30);
-    setDigits(['', '', '', '']);
-    inputs.current[0]?.focus();
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await sendOtpChallenge(phone ?? '', isNew ? 'register' : 'login');
+      setResendTimer(30);
+      setDigits(['', '', '', '']);
+      inputs.current[0]?.focus();
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e: unknown) {
+      setError((e as Error).message ?? 'Failed to resend');
+    }
   }
 
   const maskedPhone = phone
@@ -95,34 +104,25 @@ export default function OtpScreen() {
           },
         ]}
       >
-        {/* Back */}
         <Pressable style={styles.back} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </Pressable>
 
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Verification Code</Text>
-          <Text style={styles.subtitle}>
-            We sent a 4-digit code to
-          </Text>
+          <Text style={styles.subtitle}>We sent a 4-digit code to</Text>
           <Text style={styles.phone}>{maskedPhone}</Text>
         </View>
 
-        {/* OTP boxes */}
         <View style={styles.otpRow}>
           {digits.map((d, i) => (
             <TextInput
               key={i}
-              ref={r => {
-                inputs.current[i] = r;
-              }}
+              ref={r => { inputs.current[i] = r; }}
               style={[styles.box, d ? styles.boxFilled : null]}
               value={d}
               onChangeText={t => handleDigit(t, i)}
-              onKeyPress={({ nativeEvent }) =>
-                handleKeyPress(nativeEvent.key, i)
-              }
+              onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, i)}
               keyboardType="number-pad"
               maxLength={1}
               selectTextOnFocus
@@ -133,7 +133,6 @@ export default function OtpScreen() {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        {/* Verify button */}
         <Pressable
           style={({ pressed }) => [
             styles.button,
@@ -150,18 +149,13 @@ export default function OtpScreen() {
           )}
         </Pressable>
 
-        {/* Resend */}
         <Pressable
           onPress={handleResend}
           disabled={resendTimer > 0}
           style={styles.resend}
         >
-          <Text
-            style={[styles.resendText, resendTimer > 0 && styles.resendDisabled]}
-          >
-            {resendTimer > 0
-              ? `Resend code in ${resendTimer}s`
-              : 'Resend code'}
+          <Text style={[styles.resendText, resendTimer > 0 && styles.resendDisabled]}>
+            {resendTimer > 0 ? `Resend code in ${resendTimer}s` : 'Resend code'}
           </Text>
         </Pressable>
       </View>
@@ -171,94 +165,32 @@ export default function OtpScreen() {
 
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
-  container: {
-    flex: 1,
-    paddingHorizontal: 28,
-    paddingVertical: 24,
-  },
+  container: { flex: 1, paddingHorizontal: 28, paddingVertical: 24 },
   back: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    width: 44, height: 44, justifyContent: 'center', alignItems: 'center',
+    borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  header: {
-    marginTop: 48,
-    marginBottom: 48,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-    color: '#7fb5ae',
-    textAlign: 'center',
-  },
-  phone: {
-    fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    marginTop: 4,
-    letterSpacing: 1,
-  },
-  otpRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 14,
-    marginBottom: 24,
-  },
+  header: { marginTop: 48, marginBottom: 48, alignItems: 'center' },
+  title: { fontSize: 28, fontFamily: 'Inter_700Bold', color: '#FFFFFF', marginBottom: 12 },
+  subtitle: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#7fb5ae', textAlign: 'center' },
+  phone: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF', marginTop: 4, letterSpacing: 1 },
+  otpRow: { flexDirection: 'row', justifyContent: 'center', gap: 14, marginBottom: 24 },
   box: {
-    width: 64,
-    height: 72,
+    width: 64, height: 72,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1.5,
-    borderColor: '#1a5048',
-    borderRadius: 16,
-    fontSize: 28,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
+    borderWidth: 1.5, borderColor: '#1a5048', borderRadius: 16,
+    fontSize: 28, fontFamily: 'Inter_700Bold', color: '#FFFFFF', textAlign: 'center',
   },
-  boxFilled: {
-    borderColor: '#FFFFFF',
-    backgroundColor: 'rgba(255,255,255,0.14)',
-  },
-  error: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: '#ef4444',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
+  boxFilled: { borderColor: '#FFFFFF', backgroundColor: 'rgba(255,255,255,0.14)' },
+  error: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444', textAlign: 'center', marginBottom: 12 },
   button: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginTop: 8,
+    backgroundColor: '#FFFFFF', borderRadius: 14, paddingVertical: 18,
+    alignItems: 'center', marginTop: 8,
   },
   buttonDisabled: { opacity: 0.35 },
   buttonPressed: { opacity: 0.85 },
-  buttonText: {
-    fontSize: 17,
-    fontFamily: 'Inter_700Bold',
-    color: '#082926',
-  },
-  resend: {
-    marginTop: 24,
-    alignItems: 'center',
-  },
-  resendText: {
-    fontSize: 15,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
-  },
+  buttonText: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#082926' },
+  resend: { marginTop: 24, alignItems: 'center' },
+  resendText: { fontSize: 15, fontFamily: 'Inter_500Medium', color: '#FFFFFF' },
   resendDisabled: { color: '#4a8a82' },
 });

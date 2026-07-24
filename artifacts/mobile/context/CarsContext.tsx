@@ -1,60 +1,58 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useState } from 'react';
+import {
+  Car,
+  CreateCarParams,
+  listCars,
+  createCar,
+  deleteCar as deleteCarApi,
+} from '@/services/cars';
 
-export interface Car {
-  id: string;
-  plate: string;
-  type: string;
-  color: string;
-  createdAt: number;
-}
+export type { Car };
 
 interface CarsContextType {
   cars: Car[];
-  addCar: (car: Omit<Car, 'id' | 'createdAt'>) => Promise<Car>;
-  getCar: (id: string) => Car | undefined;
   isLoading: boolean;
+  error: string | null;
+  fetchCars: () => Promise<void>;
+  addCar: (params: CreateCarParams) => Promise<Car>;
+  removeCar: (id: number) => Promise<void>;
 }
 
 const CarsContext = createContext<CarsContextType | null>(null);
-const CARS_KEY = '@qar_cars';
 
 export function CarsProvider({ children }: { children: React.ReactNode }) {
   const [cars, setCars] = useState<Car[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadCars();
-  }, []);
-
-  async function loadCars() {
+  async function fetchCars() {
+    setIsLoading(true);
+    setError(null);
     try {
-      const stored = await AsyncStorage.getItem(CARS_KEY);
-      if (stored) setCars(JSON.parse(stored));
+      const data = await listCars();
+      setCars(data);
+    } catch (e: unknown) {
+      setError((e as Error).message);
     } finally {
       setIsLoading(false);
     }
   }
 
-  async function addCar(data: Omit<Car, 'id' | 'createdAt'>): Promise<Car> {
-    const car: Car = {
-      ...data,
-      id:
-        Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      createdAt: Date.now(),
-    };
-    const updated = [car, ...cars];
-    await AsyncStorage.setItem(CARS_KEY, JSON.stringify(updated));
-    setCars(updated);
+  async function addCar(params: CreateCarParams): Promise<Car> {
+    const car = await createCar(params);
+    setCars(prev => [car, ...prev]);
     return car;
   }
 
-  function getCar(id: string) {
-    return cars.find(c => c.id === id);
+  async function removeCar(id: number) {
+    await deleteCarApi(id);
+    setCars(prev => prev.filter(c => c.id !== id));
   }
 
   return (
-    <CarsContext.Provider value={{ cars, addCar, getCar, isLoading }}>
+    <CarsContext.Provider
+      value={{ cars, isLoading, error, fetchCars, addCar, removeCar }}
+    >
       {children}
     </CarsContext.Provider>
   );

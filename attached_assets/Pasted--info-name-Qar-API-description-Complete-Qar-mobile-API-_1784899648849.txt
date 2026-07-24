@@ -1,0 +1,654 @@
+{
+  "info": {
+    "name": "Qar API",
+    "description": "Complete Qar mobile API collection (auth, cars, QR scan, print requests, subscriptions).\n\n**Setup**\n1. Import `Qar.postman_environment.json` and select **Qar Production**.\n2. `baseUrl` defaults to `https://qar-4uh5.onrender.com`.\n3. Register/login requests auto-save `token`. Car/subscription requests auto-save IDs.\n\n**Auth**\n- Collection uses Bearer `{{token}}` by default.\n- Public endpoints (OTP challenge, packages, QR scan) override with no auth.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://qar-4uh5.onrender.com", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "phone", "value": "+201000000001", "type": "string" },
+    { "key": "otp", "value": "1234", "type": "string" },
+    { "key": "carId", "value": "", "type": "string" },
+    { "key": "qrCode", "value": "", "type": "string" },
+    { "key": "printRequestId", "value": "", "type": "string" },
+    { "key": "packageId", "value": "1", "type": "string" },
+    { "key": "subscriptionId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "OTP",
+      "item": [
+        {
+          "name": "Challenge (register)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"purpose\": \"register\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/otp/challenge",
+            "description": "Send OTP for registration. On production, SMS is sent; in local dev check storage/logs/laravel.log."
+          }
+        },
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().token);",
+                  "  pm.environment.set('token', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp}}\",\n  \"user_type\": \"client\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/otp/register"
+          }
+        },
+        {
+          "name": "Challenge (login)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"purpose\": \"login\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/otp/challenge"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().token);",
+                  "  pm.environment.set('token', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/otp/login"
+          }
+        },
+        {
+          "name": "Challenge (link phone)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+201000000099\",\n  \"purpose\": \"link\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/otp/challenge",
+            "description": "Send OTP before linking a phone to an existing account."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Password",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().token);",
+                  "  pm.environment.set('token', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Shop Owner\",\n  \"phone\": \"{{phone}}\",\n  \"email\": \"owner@example.com\",\n  \"password\": \"secret123\",\n  \"remember_me\": true,\n  \"date_of_birth\": \"1990-05-20\",\n  \"user_type\": \"merchant\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/password/register"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().token);",
+                  "  pm.environment.set('token', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/password/login"
+          }
+        },
+        {
+          "name": "Forgot password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/password/forgot"
+          }
+        },
+        {
+          "name": "Reset password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().token);",
+                  "  pm.environment.set('token', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp}}\",\n  \"password\": \"newsecret1\",\n  \"password_confirmation\": \"newsecret1\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/password/reset"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Account (authenticated)",
+      "item": [
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Switch mode",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().token);",
+                  "  pm.environment.set('token', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"merchant\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/switch-mode",
+            "description": "mode: client | merchant. Requires matching profile."
+          }
+        },
+        {
+          "name": "Link password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"secret123\",\n  \"password_confirmation\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/link/password"
+          }
+        },
+        {
+          "name": "Link OTP (phone)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+201000000099\",\n  \"code\": \"{{otp}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/link/otp"
+          }
+        },
+        {
+          "name": "Unlink provider",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/link/google"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/logout"
+          }
+        },
+        {
+          "name": "Logout all",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/logout-all"
+          }
+        },
+        {
+          "name": "User (sanctum check)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cars (client)",
+      "item": [
+        {
+          "name": "Add car (generate QR)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('carId', pm.response.json().id);",
+                  "  pm.collectionVariables.set('qrCode', pm.response.json().qr_code);",
+                  "  pm.environment.set('carId', pm.response.json().id);",
+                  "  pm.environment.set('qrCode', pm.response.json().qr_code);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "plate_number", "value": "ABC 1234", "type": "text" },
+                { "key": "make", "value": "Kia", "type": "text" },
+                { "key": "model", "value": "Sportage", "type": "text" },
+                { "key": "color", "value": "Black", "type": "text" },
+                { "key": "photo", "type": "file", "src": [], "description": "Optional" }
+              ]
+            },
+            "url": "{{baseUrl}}/api/cars",
+            "description": "Requires client-mode token (act-as:client)."
+          }
+        },
+        {
+          "name": "List my cars",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/cars"
+          }
+        },
+        {
+          "name": "Show car",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/cars/{{carId}}"
+          }
+        },
+        {
+          "name": "Delete car",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/cars/{{carId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "QR scan (public)",
+      "item": [
+        {
+          "name": "Scan QR code",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/scan/{{qrCode}}",
+            "description": "Public stranger view. No auth. Owner phone never returned."
+          }
+        },
+        {
+          "name": "Send alert",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"double_parked\"\n}"
+            },
+            "url": "{{baseUrl}}/api/scan/{{qrCode}}/alerts",
+            "description": "type: double_parked | lights_on | danger"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Print requests (client)",
+      "item": [
+        {
+          "name": "Create print request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('printRequestId', pm.response.json().id);",
+                  "  pm.environment.set('printRequestId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"car_id\": {{carId}},\n  \"quantity\": 1,\n  \"shipping_address\": \"12 Tahrir St, Cairo\",\n  \"notes\": \"Please print glossy\"\n}"
+            },
+            "url": "{{baseUrl}}/api/print-requests",
+            "description": "Requires active subscription."
+          }
+        },
+        {
+          "name": "List my print requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/print-requests"
+          }
+        },
+        {
+          "name": "Show print request",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/print-requests/{{printRequestId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Packages (public)",
+      "item": [
+        {
+          "name": "List packages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  const list = Array.isArray(data) ? data : (data.data || []);",
+                  "  if (list.length > 0) {",
+                  "    pm.collectionVariables.set('packageId', list[0].id);",
+                  "    pm.environment.set('packageId', list[0].id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/packages",
+            "description": "Browse monthly / semi-annual / yearly subscription packages."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions (client)",
+      "item": [
+        {
+          "name": "Subscribe (cash)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const sub = pm.response.json().subscription;",
+                  "  if (sub && sub.id) {",
+                  "    pm.collectionVariables.set('subscriptionId', sub.id);",
+                  "    pm.environment.set('subscriptionId', sub.id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"package_id\": {{packageId}},\n  \"payment_method\": \"cash\"\n}"
+            },
+            "url": "{{baseUrl}}/api/subscriptions",
+            "description": "Cash payment stays pending until admin confirms in Filament."
+          }
+        },
+        {
+          "name": "Subscribe (paymob)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const sub = pm.response.json().subscription;",
+                  "  if (sub && sub.id) {",
+                  "    pm.collectionVariables.set('subscriptionId', sub.id);",
+                  "    pm.environment.set('subscriptionId', sub.id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"package_id\": {{packageId}},\n  \"payment_method\": \"paymob\"\n}"
+            },
+            "url": "{{baseUrl}}/api/subscriptions",
+            "description": "Returns checkout_url when Paymob redirect is required."
+          }
+        },
+        {
+          "name": "List my subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/subscriptions"
+          }
+        },
+        {
+          "name": "Show subscription",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/subscriptions/{{subscriptionId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments (webhook)",
+      "item": [
+        {
+          "name": "Paymob webhook",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"obj\": {\n    \"id\": 123456789,\n    \"merchant_order_id\": \"PAY-EXAMPLE\",\n    \"success\": true,\n    \"amount_cents\": 10000,\n    \"currency\": \"EGP\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/paymob/webhook?hmac=REPLACE_WITH_VALID_HMAC",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "paymob", "webhook"],
+              "query": [{ "key": "hmac", "value": "REPLACE_WITH_VALID_HMAC" }]
+            },
+            "description": "Server-to-server Paymob callback. Requires valid HMAC query param."
+          }
+        }
+      ]
+    }
+  ]
+}

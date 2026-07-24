@@ -21,13 +21,13 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { loginWithPassword } = useAuth();
 
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const canSubmit = username.trim().length > 0 && password.length > 0;
+  const canSubmit = email.trim().length > 0 && password.length > 0;
 
   async function handleLogin() {
     if (!canSubmit) return;
@@ -35,10 +35,10 @@ export default function LoginScreen() {
     setLoading(true);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      await loginWithPassword(username.trim(), password);
+      await loginWithPassword(email.trim(), password);
       router.replace('/(main)/home');
-    } catch (e: any) {
-      setError(e.message ?? 'Sign in failed');
+    } catch (e: unknown) {
+      setError((e as Error).message ?? 'Sign in failed');
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
@@ -66,7 +66,6 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Back */}
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
             onPress={() => router.back()}
@@ -74,25 +73,24 @@ export default function LoginScreen() {
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </Pressable>
 
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Sign In</Text>
             <Text style={styles.subtitle}>Welcome back to Qar</Text>
           </View>
 
-          {/* Form */}
           <View style={styles.form}>
-            {/* Username */}
+            {/* Email */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Username</Text>
+              <Text style={styles.label}>Email</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="person-outline" size={18} color="#4a8a82" style={styles.inputIcon} />
+                <Ionicons name="mail-outline" size={18} color="#4a8a82" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your username"
+                  placeholder="Enter your email"
                   placeholderTextColor="#4a8a82"
-                  value={username}
-                  onChangeText={t => { setUsername(t); setError(''); }}
+                  value={email}
+                  onChangeText={t => { setEmail(t); setError(''); }}
+                  keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
                   returnKeyType="next"
@@ -117,10 +115,7 @@ export default function LoginScreen() {
                   returnKeyType="done"
                   onSubmitEditing={handleLogin}
                 />
-                <Pressable
-                  onPress={() => setShowPassword(v => !v)}
-                  style={styles.eyeBtn}
-                >
+                <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
@@ -130,7 +125,6 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            {/* Error */}
             {error ? (
               <View style={styles.errorBox}>
                 <Ionicons name="alert-circle" size={16} color="#ef4444" />
@@ -138,7 +132,6 @@ export default function LoginScreen() {
               </View>
             ) : null}
 
-            {/* Submit */}
             <Pressable
               style={({ pressed }) => [
                 styles.button,
@@ -156,7 +149,6 @@ export default function LoginScreen() {
             </Pressable>
           </View>
 
-          {/* Switch to register */}
           <View style={styles.switchRow}>
             <Text style={styles.switchText}>Don't have an account? </Text>
             <Pressable onPress={() => router.replace('/(auth)/register')}>
@@ -172,104 +164,41 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   flex: { flex: 1 },
-  container: {
-    flexGrow: 1,
-    paddingHorizontal: 28,
-    gap: 32,
-  },
+  container: { flexGrow: 1, paddingHorizontal: 28, gap: 32 },
   backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
+    justifyContent: 'center', alignItems: 'center', alignSelf: 'flex-start',
   },
   header: { gap: 6 },
-  title: {
-    fontSize: 32,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-  },
-  subtitle: {
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-    color: '#7fb5ae',
-  },
+  title: { fontSize: 32, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  subtitle: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
   form: { gap: 18 },
   fieldGroup: { gap: 8 },
-  label: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#7fb5ae',
-  },
+  label: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1,
-    borderColor: '#1a5048',
-    borderRadius: 14,
-    paddingHorizontal: 14,
+    borderWidth: 1, borderColor: '#1a5048', borderRadius: 14, paddingHorizontal: 14,
   },
   inputIcon: { marginRight: 8 },
-  input: {
-    flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    color: '#FFFFFF',
-  },
+  input: { flex: 1, paddingVertical: 16, fontSize: 16, fontFamily: 'Inter_400Regular', color: '#FFFFFF' },
   inputPassword: { paddingRight: 8 },
-  eyeBtn: {
-    padding: 4,
-  },
+  eyeBtn: { padding: 4 },
   errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.25)',
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 12,
+    borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
   },
-  errorText: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: '#ef4444',
-    flex: 1,
-  },
+  errorText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444', flex: 1 },
   button: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginTop: 4,
+    backgroundColor: '#FFFFFF', borderRadius: 14, paddingVertical: 18,
+    alignItems: 'center', marginTop: 4,
   },
   buttonDisabled: { opacity: 0.35 },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  buttonText: {
-    fontSize: 17,
-    fontFamily: 'Inter_700Bold',
-    color: '#082926',
-  },
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  switchText: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: '#7fb5ae',
-  },
-  switchLink: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    textDecorationLine: 'underline',
-  },
+  buttonText: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#082926' },
+  switchRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' },
+  switchText: { fontSize: 14, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  switchLink: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF', textDecorationLine: 'underline' },
 });
