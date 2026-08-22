@@ -6,12 +6,13 @@ import {
   otpLogin,
   passwordRegister,
   passwordLogin,
+  googleLogin,
   logoutApi,
 } from '@/services/auth';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type AuthMethod = 'phone' | 'password';
+export type AuthMethod = 'phone' | 'password' | 'google';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -46,6 +47,8 @@ interface AuthContextType extends AuthState {
   }) => Promise<void>;
   /** Password login */
   loginWithPassword: (email: string, password: string) => Promise<void>;
+  /** Google login with a verified Google ID token */
+  loginWithGoogle: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -160,6 +163,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }
 
+  async function loginWithGoogle(idToken: string) {
+    const res = await googleLogin(idToken);
+    await persistSession({
+      isAuthenticated: true,
+      userId: res.user.id,
+      phone: res.user.phone ?? null,
+      username: res.user.name,
+      email: res.user.email ?? null,
+      authMethod: 'google',
+      token: res.token,
+    });
+  }
+
   async function logout() {
     try {
       await logoutApi();
@@ -181,7 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ ...state, loginWithOtp, register, loginWithPassword, logout }}
+      value={{ ...state, loginWithOtp, register, loginWithPassword, loginWithGoogle, logout }}
     >
       {children}
     </AuthContext.Provider>

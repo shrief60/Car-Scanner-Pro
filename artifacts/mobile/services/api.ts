@@ -64,7 +64,15 @@ async function request<T>(
       (err?.message as string) ||
       (err?.error as string) ||
       `Request failed (${res.status})`;
-    throw new Error(msg);
+    const error = new Error(msg) as Error & {
+      status?: number;
+      code?: string;
+      details?: unknown;
+    };
+    error.status = res.status;
+    error.code = typeof err?.error === 'string' ? err.error : undefined;
+    error.details = err;
+    throw error;
   }
 
   return json as T;

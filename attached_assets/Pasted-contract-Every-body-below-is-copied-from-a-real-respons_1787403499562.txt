@@ -1,0 +1,85 @@
+contract
+Every body below is copied from a real response, not written from memory.
+
+Request
+
+POST {{base_url}}/api/auth/google/login
+Content-Type: application/json
+Accept: application/json
+X-Device-Name: Pixel 8 / Qar 1.4.0        ← optional, names the token in the session list
+
+{
+  "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6...",
+  "user_type": "client"
+}
+Field	Required	Notes
+id_token	yes	The Google ID token (JWT). Never the access token — its audience can't be verified.
+user_type	no	client | merchant. Only meaningful on first sign-in; ignored for a known account. Defaults to client.
+POST /api/auth/google/register is the same call and returns 201 instead of 200. Use /login only — the server decides whether the identity is new and reports it via is_new_user. The app never has to guess which one to call.
+
+Rate limit: 10/min per phone+IP (throttle:auth-login). Exceeding it returns 429 with a Retry-After header.
+
+Response — 200
+
+{
+  "token": "1|tjhjDgId8xMhP85bFR9QTSI55a3SkuzlZOxRnroi7b4c3839",
+  "token_type": "Bearer",
+  "abilities": ["act-as:client"],
+  "mode": "client",
+  "is_new_user": true,
+  "needs_profile": true,
+  "needs_phone": true,
+  "user": {
+    "id": 6,
+    "name": "Nour",
+    "phone": null,
+    "email": "nour@example.com",
+    "date_of_birth": null,
+    "active_mode": "client",
+    "locale": "ar",
+    "is_active": true,
+    "is_client": false,
+    "is_merchant": false,
+    "has_password": false,
+    "phone_verified": false,
+    "email_verified": true,
+    "created_at": "2026-08-22T12:53:44.000000Z"
+  }
+}
+Not wrapped in data — JsonResource::withoutWrapping() is set globally.
+
+Store token in react-native-keychain, then send it on every subsequent call:
+
+
+Authorization: Bearer 1|tjhjDgId8xMhP85bFR9QTSI55a3SkuzlZOxRnroi7b4c3839
+Lifetime is 30 days (TOKEN_LIFETIME_MINUTES=43200). remember_me is not accepted on the Google flow.
+
+The three flags drive your navigation
+Flag	Meaning	App must do
+is_new_user	account was just created	onboarding vs. straight to home
+needs_phone	no phone on file — Google gives none	POST /auth/otp/challenge → POST /auth/link/otp. Required before QR/print flows.
+needs_profile	no profile row for mode	profile completion screen
+abilities tells you which routes the token can reach — act-as:client or act-as:merchant, never both. Switching sides means POST /auth/switch-mode, which revokes the current token and returns a new one.
+
+Errors
+409 — email already registered. The only Google-specific error. Identities are never auto-merged.
+
+
+{
+  "error": "requires_link",
+  "provider": "google",
+  "email": "taken@example.com",
+  "message": "This email is already registered. Log in with your existing method, then link Google."
+}
+→ Send the user to phone/password login, then POST /auth/link/google with the same id_token. Branch on error === "requires_link", not on the message.
+
+422 — token rejected or missing. Standard Laravel validation shape:
+
+
+{
+  "message": "The id token field is required.",
+  "errors": { "id_token": ["The id token field is required."] }
+}
+Covers: missing field, bad signature, expired token, wrong audience, unverified Google email, unknown sub. Treat it as "re-run GoogleSignin.signIn() once, then show a generic failure" — the server deliberately does not tell the client why a token failed.
+
+Step 4 — using the t

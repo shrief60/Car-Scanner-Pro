@@ -45,6 +45,25 @@ export interface PasswordAuthResponse {
   user: UserProfile;
 }
 
+export interface GoogleAuthResponse {
+  token: string;
+  token_type?: string;
+  abilities?: string[];
+  mode?: string;
+  is_new_user?: boolean;
+  needs_profile?: boolean;
+  needs_phone?: boolean;
+  user: UserProfile;
+}
+
+export function googleLogin(idToken: string): Promise<GoogleAuthResponse> {
+  return api.post(
+    '/api/auth/google/login',
+    { id_token: idToken, user_type: 'client' },
+    false,
+  );
+}
+
 export function passwordRegister(params: {
   name: string;
   email: string;
