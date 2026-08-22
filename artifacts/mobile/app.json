@@ -14,7 +14,8 @@
       "backgroundColor": "#082926"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.qar.app"
     },
     "android": {
       "adaptiveIcon": {
