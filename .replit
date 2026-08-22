@@ -21,3 +21,10 @@ timeoutMs = 20000
 
 [nix]
 packages = ["zulu"]
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID = "656026130751-ncprps9ig2brnce1u73vtjckmetap44v.apps.googleusercontent.com"
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "656026130751-8p373kvdf4a1897ji65k855767a1ro5r.apps.googleusercontent.com"
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = "656026130751-pqv57ifkc938a981gsaiu9986b11aqsk.apps.googleusercontent.com"
