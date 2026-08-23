@@ -33,10 +33,15 @@ export default function WelcomeScreen() {
   const [googleError, setGoogleError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const redirectUri = useMemo(
-    () => makeRedirectUri({ scheme: 'mobile', path: 'auth/callback' }),
-    [],
-  );
+  const redirectUri = useMemo(() => {
+    // Google requires an exact redirect URI for browser-based OAuth.
+    // Use the current preview/deployment origin on web and the Qar scheme
+    // for native builds.
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return `${window.location.origin}/auth/callback`;
+    }
+    return makeRedirectUri({ scheme: 'mobile', path: 'auth/callback' });
+  }, []);
 
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -47,6 +52,9 @@ export default function WelcomeScreen() {
             ? GOOGLE_ANDROID_CLIENT_ID
             : GOOGLE_WEB_CLIENT_ID,
       responseType: ResponseType.IdToken,
+      // The Qar API expects Google's ID token directly. PKCE adds
+      // code_challenge_method, which is not valid for this response type.
+      usePKCE: false,
       scopes: ['openid', 'profile', 'email'],
       redirectUri,
     },
