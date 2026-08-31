@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,113 +15,73 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { Controller, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { FormField } from '@/components/FormField';
 import { useAuth } from '@/context/AuthContext';
+import { applyServerErrors } from '@/lib/serverErrors';
+import { MIN_PASSWORD, registerSchema, RegisterValues, toE164 } from '@/lib/schemas';
+
+const FIELDS = ['name', 'email', 'phone', 'password', 'confirm'] as const;
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
   const { register } = useAuth();
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  function validate() {
-    const e: Record<string, string> = {};
-    if (name.trim().length < 2) e.name = 'Name must be at least 2 characters';
-    if (!/\S+@\S+\.\S+/.test(email.trim())) e.email = 'Enter a valid email address';
-    if (password.length < 6) e.password = 'Password must be at least 6 characters';
-    if (password !== confirm) e.confirm = 'Passwords do not match';
-    return e;
-  }
+  // "next" on the keyboard walks down the form instead of dismissing it.
+  const emailRef = useRef<TextInput>(null);
+  const phoneRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
 
-  const canSubmit =
-    name.trim().length >= 2 &&
-    email.trim().includes('@') &&
-    password.length >= 6 &&
-    confirm.length > 0;
+  const {
+    control,
+    handleSubmit,
+    setError,
+    watch,
+    formState: { errors, isValid, isSubmitting },
+  } = useForm<RegisterValues>({
+    resolver: yupResolver(registerSchema),
+    // onTouched, not onChange — otherwise the phone errors while you are still typing it.
+    mode: 'onTouched',
+    defaultValues: { name: '', email: '', phone: '', password: '', confirm: '' },
+  });
 
-  async function handleRegister() {
-    const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
-    setErrors({});
-    setLoading(true);
+  const password = watch('password');
+  const confirm = watch('confirm');
+
+  async function onSubmit(values: RegisterValues) {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await register({
-        name: name.trim(),
-        email: email.trim(),
-        password,
-        password_confirmation: confirm,
+        name: values.name.trim(),
+        email: values.email.trim(),
+        // The form holds national digits; the API wants E.164.
+        phone: toE164(values.phone),
+        password: values.password,
+        password_confirmation: values.confirm,
       });
       router.replace('/(main)/home');
     } catch (err: unknown) {
-      setErrors({ general: (err as Error).message ?? 'Registration failed' });
+      applyServerErrors<RegisterValues>(err, setError, FIELDS);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setLoading(false);
     }
   }
 
   function strength(): { label: string; color: string; width: number } {
-    const len = password.length;
+    const len = password?.length ?? 0;
     if (len === 0) return { label: '', color: 'transparent', width: 0 };
-    if (len < 6) return { label: 'Too short', color: '#ef4444', width: 0.25 };
-    const score = [/[A-Z]/.test(password), /[0-9]/.test(password), /[^a-zA-Z0-9]/.test(password)].filter(Boolean).length;
+    if (len < MIN_PASSWORD) return { label: 'Too short', color: '#ef4444', width: 0.25 };
+    const score = [/[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter(re => re.test(password)).length;
     if (score === 0) return { label: 'Weak', color: '#f97316', width: 0.4 };
     if (score === 1) return { label: 'Fair', color: '#eab308', width: 0.6 };
     if (score === 2) return { label: 'Strong', color: '#22c55e', width: 0.85 };
     return { label: 'Very strong', color: '#16a34a', width: 1 };
   }
   const str = strength();
-
-  const Field = ({
-    label, value, onChange, placeholder, keyboardType, secure, show, setShow, icon, error, hint, returnKeyType, onSubmit,
-  }: {
-    label: string; value: string; onChange: (t: string) => void; placeholder: string;
-    keyboardType?: 'email-address' | 'default'; secure?: boolean; show?: boolean;
-    setShow?: (v: boolean) => void; icon: string; error?: string; hint?: string;
-    returnKeyType?: 'next' | 'done'; onSubmit?: () => void;
-  }) => (
-    <View style={styles.fieldGroup}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputWrapper, error ? styles.inputError : null]}>
-        <Ionicons name={icon as any} size={18} color="#4a8a82" style={styles.inputIcon} />
-        <TextInput
-          style={[styles.input, secure && styles.inputPassword]}
-          placeholder={placeholder}
-          placeholderTextColor="#4a8a82"
-          value={value}
-          onChangeText={onChange}
-          secureTextEntry={secure && !show}
-          keyboardType={keyboardType ?? 'default'}
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType={returnKeyType ?? 'next'}
-          onSubmitEditing={onSubmit}
-        />
-        {secure && setShow && (
-          <Pressable onPress={() => setShow(!show)} style={styles.eyeBtn}>
-            <Ionicons name={show ? 'eye-off-outline' : 'eye-outline'} size={20} color="#7fb5ae" />
-          </Pressable>
-        )}
-        {secure && value.length > 0 && label === 'Confirm Password' && (
-          <Ionicons
-            name={value === password ? 'checkmark-circle' : 'close-circle'}
-            size={20}
-            color={value === password ? '#22c55e' : '#ef4444'}
-            style={{ marginLeft: 4 }}
-          />
-        )}
-      </View>
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      {hint && !error ? <Text style={styles.hint}>{hint}</Text> : null}
-    </View>
-  );
 
   return (
     <LinearGradient
@@ -157,25 +117,70 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.form}>
-            <Field
-              label="Full Name" value={name}
-              onChange={t => { setName(t); setErrors(p => ({ ...p, name: '' })); }}
-              placeholder="Your full name" icon="person-outline" error={errors.name}
+            <Controller
+              control={control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <FormField
+                  label="Full Name" placeholder="Your full name" icon="person-outline"
+                  value={field.value} onChange={field.onChange} onBlur={field.onBlur}
+                  error={fieldState.error?.message}
+                  autoCapitalize="words" autoComplete="name" textContentType="name"
+                  returnKeyType="next" onSubmit={() => emailRef.current?.focus()}
+                />
+              )}
             />
-            <Field
-              label="Email" value={email}
-              onChange={t => { setEmail(t); setErrors(p => ({ ...p, email: '' })); }}
-              placeholder="your@email.com" keyboardType="email-address"
-              icon="mail-outline" error={errors.email}
+
+            <Controller
+              control={control}
+              name="email"
+              render={({ field, fieldState }) => (
+                <FormField
+                  ref={emailRef}
+                  label="Email" placeholder="your@email.com" icon="mail-outline"
+                  value={field.value} onChange={field.onChange} onBlur={field.onBlur}
+                  error={fieldState.error?.message}
+                  keyboardType="email-address"
+                  autoComplete="email" textContentType="emailAddress"
+                  returnKeyType="next" onSubmit={() => phoneRef.current?.focus()}
+                />
+              )}
             />
+
+            <Controller
+              control={control}
+              name="phone"
+              render={({ field, fieldState }) => (
+                <FormField
+                  ref={phoneRef}
+                  label="Phone Number" placeholder="10X XXX XXXX" icon="call-outline"
+                  value={field.value} onChange={field.onChange} onBlur={field.onBlur}
+                  error={fieldState.error?.message}
+                  keyboardType="phone-pad" prefix="+20" maxLength={14}
+                  autoComplete="tel" textContentType="telephoneNumber"
+                  hint="We never show your number to anyone who scans your car."
+                  returnKeyType="next" onSubmit={() => passwordRef.current?.focus()}
+                />
+              )}
+            />
+
             <View style={styles.fieldGroup}>
-              <Field
-                label="Password" value={password}
-                onChange={t => { setPassword(t); setErrors(p => ({ ...p, password: '' })); }}
-                placeholder="Choose a password" icon="lock-closed-outline"
-                secure show={showPassword} setShow={setShowPassword} error={errors.password}
+              <Controller
+                control={control}
+                name="password"
+                render={({ field, fieldState }) => (
+                  <FormField
+                    ref={passwordRef}
+                    label="Password" placeholder="Choose a password" icon="lock-closed-outline"
+                    value={field.value} onChange={field.onChange} onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                    secure show={showPassword} setShow={setShowPassword}
+                    autoComplete="new-password" textContentType="newPassword"
+                    returnKeyType="next" onSubmit={() => confirmRef.current?.focus()}
+                  />
+                )}
               />
-              {password.length > 0 && (
+              {!!password?.length && (
                 <View style={styles.strengthRow}>
                   <View style={styles.strengthBar}>
                     <View style={[styles.strengthFill, { width: `${str.width * 100}%` as any, backgroundColor: str.color }]} />
@@ -184,43 +189,53 @@ export default function RegisterScreen() {
                 </View>
               )}
             </View>
-            <Field
-              label="Confirm Password" value={confirm}
-              onChange={t => { setConfirm(t); setErrors(p => ({ ...p, confirm: '' })); }}
-              placeholder="Repeat your password" icon="lock-closed-outline"
-              secure show={showConfirm} setShow={setShowConfirm} error={errors.confirm}
-              returnKeyType="done" onSubmit={handleRegister}
+
+            <Controller
+              control={control}
+              name="confirm"
+              render={({ field, fieldState }) => (
+                <FormField
+                  ref={confirmRef}
+                  label="Confirm Password" placeholder="Repeat your password" icon="lock-closed-outline"
+                  value={field.value} onChange={field.onChange} onBlur={field.onBlur}
+                  error={fieldState.error?.message}
+                  secure show={showConfirm} setShow={setShowConfirm}
+                  autoComplete="new-password" textContentType="newPassword"
+                  match={!!confirm && confirm === password}
+                  returnKeyType="done" onSubmit={handleSubmit(onSubmit)}
+                />
+              )}
             />
 
-            {errors.general ? (
+            {errors.root ? (
               <View style={styles.errorBox}>
                 <Ionicons name="alert-circle" size={16} color="#ef4444" />
-                <Text style={styles.errorText}>{errors.general}</Text>
+                <Text style={styles.errorText}>{errors.root.message}</Text>
               </View>
             ) : null}
 
             <Pressable
               style={({ pressed }) => [
                 styles.button,
-                !canSubmit && styles.buttonDisabled,
+                (!isValid || isSubmitting) && styles.buttonDisabled,
                 pressed && styles.buttonPressed,
               ]}
-              onPress={handleRegister}
-              disabled={loading || !canSubmit}
+              onPress={handleSubmit(onSubmit)}
+              disabled={!isValid || isSubmitting}
             >
-              {loading ? (
+              {isSubmitting ? (
                 <ActivityIndicator color="#082926" />
               ) : (
                 <Text style={styles.buttonText}>Create Account</Text>
               )}
             </Pressable>
-          </View>
 
-          <View style={styles.switchRow}>
-            <Text style={styles.switchText}>Already have an account? </Text>
-            <Pressable onPress={() => router.replace('/(auth)/login')}>
-              <Text style={styles.switchLink}>Sign in</Text>
-            </Pressable>
+            <View style={styles.switchRow}>
+              <Text style={styles.switchText}>Already have an account? </Text>
+              <Pressable onPress={() => router.replace('/(auth)/login')}>
+                <Text style={styles.switchLink}>Sign in</Text>
+              </Pressable>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -231,7 +246,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   flex: { flex: 1 },
-  container: { flexGrow: 1, paddingHorizontal: 28, gap: 24 },
+  container: { flexGrow: 1, paddingHorizontal: 28, gap: 32 },
   backBtn: {
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.08)',
@@ -240,30 +255,18 @@ const styles = StyleSheet.create({
   header: { gap: 6 },
   title: { fontSize: 32, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
   subtitle: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
-  form: { gap: 14 },
-  fieldGroup: { gap: 7 },
-  label: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
-  inputWrapper: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1, borderColor: '#1a5048', borderRadius: 14, paddingHorizontal: 14,
-  },
-  inputError: { borderColor: '#ef4444' },
-  inputIcon: { marginRight: 8 },
-  input: { flex: 1, paddingVertical: 16, fontSize: 16, fontFamily: 'Inter_400Regular', color: '#FFFFFF' },
-  inputPassword: { paddingRight: 8 },
-  eyeBtn: { padding: 4 },
-  hint: { fontSize: 11, fontFamily: 'Inter_400Regular', color: '#4a8a82' },
-  strengthRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
-  strengthBar: { flex: 1, height: 4, backgroundColor: '#1a5048', borderRadius: 2, overflow: 'hidden' },
+  form: { gap: 18 },
+  fieldGroup: { gap: 8 },
+  strengthRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  strengthBar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: '#124038', overflow: 'hidden' },
   strengthFill: { height: '100%', borderRadius: 2 },
-  strengthLabel: { fontSize: 12, fontFamily: 'Inter_500Medium', width: 72 },
+  strengthLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 12,
     borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
   },
-  errorText: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#ef4444', flex: 1 },
+  errorText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444', flex: 1 },
   button: {
     backgroundColor: '#FFFFFF', borderRadius: 14, paddingVertical: 18,
     alignItems: 'center', marginTop: 4,

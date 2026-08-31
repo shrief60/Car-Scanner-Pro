@@ -1,13 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,68 +12,26 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
-import { useCars, Car } from '@/context/CarsContext';
 
 const SERVICES = [
   { id: 'maintenance', label: 'Maintenance', subtitle: 'Keep your car running', icon: 'construct-outline', color: '#4ade80' },
   { id: 'accessories', label: 'Accessories', subtitle: 'Upgrade your drive', icon: 'color-palette-outline', color: '#60a5fa' },
   { id: 'marketplace', label: 'Buy & Sell', subtitle: 'Find your next car', icon: 'swap-horizontal-outline', color: '#fbbf24' },
-  { id: 'notifications', label: 'Notifications', subtitle: 'Your Qar updates', icon: 'notifications-outline', color: '#c084fc' },
+  // 'notifications' lives in the header bell, which calls openService('notifications').
   { id: 'reminders', label: 'Reminders', subtitle: 'Never miss a date', icon: 'calendar-outline', color: '#fb923c' },
   { id: 'sos', label: 'SOS', subtitle: 'Get help fast', icon: 'alert-circle-outline', color: '#f87171' },
 ];
 
-function CarCard({ car }: { car: Car }) {
-  return (
-    <Pressable
-      style={({ pressed }) => [styles.carCard, pressed && { opacity: 0.8 }]}
-      onPress={() => router.push({
-        pathname: '/(main)/qr-display',
-        params: {
-          id: String(car.id),
-          plate: car.plate_number,
-          make: car.make ?? '',
-          model: car.model ?? '',
-          color: car.color ?? '',
-          qrCode: car.qr_code,
-        },
-      })}
-    >
-      <View style={styles.carIcon}>
-        <Ionicons name="car-sport-outline" size={24} color="#7fb5ae" />
-      </View>
-      <View style={styles.carDetails}>
-        <Text style={styles.carPlate}>{car.plate_number}</Text>
-        <Text style={styles.carMeta}>
-          {[car.make, car.model, car.color].filter(Boolean).join(' · ') || 'View car details'}
-        </Text>
-      </View>
-      <Ionicons name="qr-code-outline" size={22} color="#FFFFFF" />
-    </Pressable>
-  );
-}
-
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { phone, username, authMethod, logout } = useAuth();
-  const { cars, isLoading, error, fetchCars } = useCars();
+  const { phone, username, authMethod } = useAuth();
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
   const displayName = authMethod === 'password' || authMethod === 'google' ? username : phone;
 
-  useEffect(() => {
-    fetchCars();
-  }, []);
-
   function openService(id: string) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push({ pathname: '/(main)/service', params: { service: id } });
-  }
-
-  async function handleLogout() {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await logout();
-    router.replace('/(auth)/welcome');
   }
 
   return (
@@ -94,8 +49,12 @@ export default function HomeScreen() {
             <Pressable style={styles.headerBtn} onPress={() => openService('notifications')}>
               <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
             </Pressable>
-            <Pressable style={styles.headerBtn} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={22} color="#7fb5ae" />
+            <Pressable
+              style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+              onPress={() => router.push('/(main)/profile')}
+              accessibilityLabel="Open your profile"
+            >
+              <Ionicons name="person-outline" size={22} color="#FFFFFF" />
             </Pressable>
           </View>
         </View>
@@ -154,49 +113,7 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>My Cars</Text>
-          <Pressable onPress={() => router.push('/(main)/add-car')}>
-            <Text style={styles.addText}>+ Add car</Text>
-          </Pressable>
-        </View>
-        {isLoading && cars.length === 0 ? (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator color="#7fb5ae" />
-            <Text style={styles.loadingText}>Loading your cars…</Text>
-          </View>
-        ) : error ? (
-          <View style={styles.errorBox}>
-            <Ionicons name="alert-circle-outline" size={20} color="#ef4444" />
-            <Text style={styles.errorText}>{error}</Text>
-            <Pressable onPress={fetchCars}><Text style={styles.retryText}>Retry</Text></Pressable>
-          </View>
-        ) : cars.length === 0 ? (
-          <Pressable style={styles.emptyCard} onPress={() => router.push('/(main)/add-car')}>
-            <Ionicons name="car-outline" size={30} color="#7fb5ae" />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.emptyTitle}>Add your first car</Text>
-              <Text style={styles.emptySubtitle}>Create a QR code and stay connected</Text>
-            </View>
-            <Ionicons name="add-circle-outline" size={24} color="#FFFFFF" />
-          </Pressable>
-        ) : (
-          <FlatList
-            data={cars.slice(0, 3)}
-            keyExtractor={car => String(car.id)}
-            renderItem={({ item }) => <CarCard car={item} />}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          />
-        )}
       </ScrollView>
-
-      <Pressable
-        style={({ pressed }) => [styles.fab, { bottom: botPad + 22 }, pressed && styles.fabPressed]}
-        onPress={() => router.push('/(main)/add-car')}
-      >
-        <Ionicons name="add" size={30} color="#082926" />
-      </Pressable>
     </View>
   );
 }
@@ -227,25 +144,11 @@ const styles = StyleSheet.create({
   searchLabel: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#082926' },
   searchHint: { fontSize: 10, fontFamily: 'Inter_400Regular', color: '#4a8a82', marginTop: 2 },
   optionPressed: { opacity: 0.78, transform: [{ scale: 0.98 }] },
-  servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  serviceCard: { width: '31.9%', minHeight: 112, backgroundColor: '#0e3b33', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#1a5048' },
-  serviceIcon: { width: 42, height: 42, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 9 },
-  serviceLabel: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
-  serviceSubtitle: { fontSize: 10, fontFamily: 'Inter_400Regular', color: '#7fb5ae', marginTop: 3, lineHeight: 13 },
-  addText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
-  loadingBox: { alignItems: 'center', padding: 24, gap: 8 },
-  loadingText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
-  errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)' },
-  errorText: { flex: 1, fontSize: 12, fontFamily: 'Inter_400Regular', color: '#ef4444' },
-  retryText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
-  emptyCard: { backgroundColor: '#0e3b33', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#1a5048' },
-  emptyTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
-  emptySubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#7fb5ae', marginTop: 4 },
-  carCard: { backgroundColor: '#0e3b33', borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#1a5048' },
-  carIcon: { width: 46, height: 46, borderRadius: 14, backgroundColor: '#082926', justifyContent: 'center', alignItems: 'center' },
-  carDetails: { flex: 1 },
-  carPlate: { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#FFFFFF', letterSpacing: 2 },
-  carMeta: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#7fb5ae', marginTop: 3 },
-  fab: { position: 'absolute', right: 24, width: 58, height: 58, borderRadius: 29, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', elevation: 8, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8 },
-  fabPressed: { transform: [{ scale: 0.94 }] },
+  // Fixed half-width cards, with space-between pushing each row out to both edges.
+  // Every card is the same size, and an odd last one simply sits at the left.
+  servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 10, justifyContent: 'space-between' },
+  serviceCard: { width: '48.5%', minHeight: 112, backgroundColor: '#0e3b33', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#1a5048' },
+  serviceIcon: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+  serviceLabel: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
+  serviceSubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#7fb5ae', marginTop: 3, lineHeight: 16 },
 });

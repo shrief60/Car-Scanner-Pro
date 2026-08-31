@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,33 +15,41 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { Controller, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { FormField } from '@/components/FormField';
 import { useAuth } from '@/context/AuthContext';
+import { applyServerErrors } from '@/lib/serverErrors';
+import { loginSchema, LoginValues } from '@/lib/schemas';
+
+const FIELDS = ['email', 'password'] as const;
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { loginWithPassword } = useAuth();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const passwordRef = useRef<TextInput>(null);
 
-  const canSubmit = email.trim().length > 0 && password.length > 0;
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors, isValid, isSubmitting },
+  } = useForm<LoginValues>({
+    resolver: yupResolver(loginSchema),
+    mode: 'onTouched',
+    defaultValues: { email: '', password: '' },
+  });
 
-  async function handleLogin() {
-    if (!canSubmit) return;
-    setError('');
-    setLoading(true);
+  async function onSubmit(values: LoginValues) {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      await loginWithPassword(email.trim(), password);
+      await loginWithPassword(values.email.trim(), values.password);
       router.replace('/(main)/home');
-    } catch (e: unknown) {
-      setError((e as Error).message ?? 'Sign in failed');
+    } catch (err: unknown) {
+      applyServerErrors<LoginValues>(err, setError, FIELDS);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -79,69 +87,54 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.form}>
-            {/* Email */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Email</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={18} color="#4a8a82" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  placeholderTextColor="#4a8a82"
-                  value={email}
-                  onChangeText={t => { setEmail(t); setError(''); }}
+            <Controller
+              control={control}
+              name="email"
+              render={({ field, fieldState }) => (
+                <FormField
+                  label="Email" placeholder="Enter your email" icon="mail-outline"
+                  value={field.value} onChange={field.onChange} onBlur={field.onBlur}
+                  error={fieldState.error?.message}
                   keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="next"
+                  autoComplete="email" textContentType="emailAddress"
+                  returnKeyType="next" onSubmit={() => passwordRef.current?.focus()}
                 />
-              </View>
-            </View>
+              )}
+            />
 
-            {/* Password */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={18} color="#4a8a82" style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, styles.inputPassword]}
-                  placeholder="Enter your password"
-                  placeholderTextColor="#4a8a82"
-                  value={password}
-                  onChangeText={t => { setPassword(t); setError(''); }}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="done"
-                  onSubmitEditing={handleLogin}
+            <Controller
+              control={control}
+              name="password"
+              render={({ field, fieldState }) => (
+                <FormField
+                  ref={passwordRef}
+                  label="Password" placeholder="Enter your password" icon="lock-closed-outline"
+                  value={field.value} onChange={field.onChange} onBlur={field.onBlur}
+                  error={fieldState.error?.message}
+                  secure show={showPassword} setShow={setShowPassword}
+                  autoComplete="current-password" textContentType="password"
+                  returnKeyType="done" onSubmit={handleSubmit(onSubmit)}
                 />
-                <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color="#7fb5ae"
-                  />
-                </Pressable>
-              </View>
-            </View>
+              )}
+            />
 
-            {error ? (
+            {errors.root ? (
               <View style={styles.errorBox}>
                 <Ionicons name="alert-circle" size={16} color="#ef4444" />
-                <Text style={styles.errorText}>{error}</Text>
+                <Text style={styles.errorText}>{errors.root.message}</Text>
               </View>
             ) : null}
 
             <Pressable
               style={({ pressed }) => [
                 styles.button,
-                !canSubmit && styles.buttonDisabled,
+                (!isValid || isSubmitting) && styles.buttonDisabled,
                 pressed && styles.buttonPressed,
               ]}
-              onPress={handleLogin}
-              disabled={loading || !canSubmit}
+              onPress={handleSubmit(onSubmit)}
+              disabled={!isValid || isSubmitting}
             >
-              {loading ? (
+              {isSubmitting ? (
                 <ActivityIndicator color="#082926" />
               ) : (
                 <Text style={styles.buttonText}>Sign In</Text>
@@ -174,17 +167,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
   subtitle: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
   form: { gap: 18 },
-  fieldGroup: { gap: 8 },
-  label: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
-  inputWrapper: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1, borderColor: '#1a5048', borderRadius: 14, paddingHorizontal: 14,
-  },
-  inputIcon: { marginRight: 8 },
-  input: { flex: 1, paddingVertical: 16, fontSize: 16, fontFamily: 'Inter_400Regular', color: '#FFFFFF' },
-  inputPassword: { paddingRight: 8 },
-  eyeBtn: { padding: 4 },
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 12,

@@ -16,6 +16,12 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 
+// Dev-only inspector for API calls, logs and AsyncStorage. `main` is expo-router/entry,
+// so this root layout is the earliest module we control. Stripped from release builds.
+if (__DEV__) {
+  require('@/reactotron.config');
+}
+
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();

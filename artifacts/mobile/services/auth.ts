@@ -64,12 +64,16 @@ export function googleLogin(idToken: string): Promise<GoogleAuthResponse> {
   );
 }
 
+/**
+ * `phone` is REQUIRED by the API (E.164, e.g. "+201013161388") and `password` must be
+ * at least 8 characters — omitting or shortening either returns 422.
+ */
 export function passwordRegister(params: {
   name: string;
   email: string;
   password: string;
   password_confirmation: string;
-  phone?: string;
+  phone: string;
 }): Promise<PasswordAuthResponse> {
   return api.post(
     '/api/auth/password/register',
@@ -78,7 +82,7 @@ export function passwordRegister(params: {
       email: params.email,
       password: params.password,
       password_confirmation: params.password_confirmation,
-      phone: params.phone ?? '',
+      phone: params.phone,
       remember_me: true,
       user_type: 'client',
     },
@@ -98,11 +102,26 @@ export function passwordLogin(
 export interface UserProfile {
   id: number;
   name: string;
-  email?: string;
-  phone?: string;
+  email?: string | null;
+  phone?: string | null;
+  date_of_birth?: string | null;
+  active_mode?: 'client' | 'merchant';
+  locale?: string;
+  is_active?: boolean;
+  is_client?: boolean;
+  is_merchant?: boolean;
+  has_password?: boolean;
+  phone_verified?: boolean;
+  email_verified?: boolean;
+  created_at?: string;
 }
 
-export function getMe(): Promise<{ user: UserProfile }> {
+/**
+ * Returns the user object *flat* — the API never wraps responses
+ * (JsonResource::withoutWrapping() is set globally). The auth endpoints nest the
+ * user under `user` because they also return a token; this one does not.
+ */
+export function getMe(): Promise<UserProfile> {
   return api.get('/api/auth/me');
 }
 

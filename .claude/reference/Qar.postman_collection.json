@@ -1,0 +1,2963 @@
+{
+    "info": {
+        "name": "Qar API",
+        "description": "Complete Qar mobile API collection — every registered `api/*` route, each with saved response examples.\n\n**Setup**\n1. Import `Qar.postman_environment.json` and select **Qar Production**.\n2. `baseUrl` defaults to `https://qar-4uh5.onrender.com`.\n3. Register/login requests auto-save `token`. Car/subscription requests auto-save IDs.\n\n**Auth**\n- Collection uses Bearer `{{token}}` by default.\n- Public endpoints (OTP challenge, packages, QR scan, public menu, Paymob webhook) override with no auth.\n- Tokens are mode-scoped: a client token carries `act-as:client`, a merchant token `act-as:merchant`. Use **Account → Switch mode** to swap; it revokes the current token and returns a new one.\n\n**Response examples**\nEvery example under a request is a real response captured from the app by `tests/Feature/Api/ApiExampleResponsesTest.php`. Regenerate after changing a resource or controller:\n\n```\nphp artisan test --filter=ApiExampleResponsesTest\nphp scripts/merge-postman-examples.php\nphp scripts/check-postman-coverage.php\n```\n\n**Worth knowing**\n- `user.is_client` / `is_merchant` reflect whether the matching *profile* row exists, not the token mode. A brand-new account has `needs_profile: true` and both flags `false`.\n- Google sign-in never returns a phone number, so the response sets `needs_phone: true`; run **OTP → Challenge (link phone)** then **Account → Link OTP (phone)** next.\n- `GET /api/menu` returns **201** the first time a merchant calls it, because the menu row is created lazily. Treat 200 and 201 as success.\n- `POST /api/print-requests` returns **403** with `\"code\": \"subscription_required\"` when the client has no active subscription — branch on that code, not the message.\n- File uploads (`POST /api/cars`, `POST /api/menu/items`) are `multipart/form-data`. Menu item updates accept `POST` as well as `PUT` so a multipart body can carry a new image.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "https://qar-4uh5.onrender.com",
+            "type": "string"
+        },
+        {
+            "key": "token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "phone",
+            "value": "+201000000001",
+            "type": "string"
+        },
+        {
+            "key": "otp",
+            "value": "1234",
+            "type": "string"
+        },
+        {
+            "key": "carId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "qrCode",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "printRequestId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "packageId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "subscriptionId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "merchantId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "menuItemId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "googleIdToken",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "OTP",
+            "item": [
+                {
+                    "name": "Challenge (register)",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"purpose\": \"register\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/otp/challenge",
+                        "description": "Send OTP for registration. On production, SMS is sent; in local dev check storage/logs/laravel.log."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"purpose\": \"register\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/otp/challenge",
+                                "description": "Send OTP for registration. On production, SMS is sent; in local dev check storage/logs/laravel.log."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Verification code sent.\",\n    \"expires_in\": 300\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Register",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "  pm.collectionVariables.set('token', pm.response.json().token);",
+                                    "  pm.environment.set('token', pm.response.json().token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp}}\",\n  \"user_type\": \"client\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/otp/register"
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp}}\",\n  \"user_type\": \"client\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/otp/register"
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"token\": \"<REDACTED_TOKEN>\",\n    \"token_type\": \"Bearer\",\n    \"abilities\": [\n        \"act-as:client\"\n    ],\n    \"mode\": \"client\",\n    \"is_new_user\": true,\n    \"needs_profile\": true,\n    \"needs_phone\": false,\n    \"user\": {\n        \"id\": 6,\n        \"name\": null,\n        \"phone\": \"+201000000001\",\n        \"email\": null,\n        \"date_of_birth\": null,\n        \"active_mode\": \"client\",\n        \"locale\": \"ar\",\n        \"is_active\": true,\n        \"is_client\": false,\n        \"is_merchant\": false,\n        \"has_password\": false,\n        \"phone_verified\": true,\n        \"email_verified\": false,\n        \"created_at\": \"2026-08-29T15:19:13.000000Z\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Challenge (login)",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"purpose\": \"login\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/otp/challenge"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"purpose\": \"login\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/otp/challenge"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Verification code sent.\",\n    \"expires_in\": 300\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "  pm.collectionVariables.set('token', pm.response.json().token);",
+                                    "  pm.environment.set('token', pm.response.json().token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp}}\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/otp/login"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp}}\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/otp/login"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"token\": \"<REDACTED_TOKEN>\",\n    \"token_type\": \"Bearer\",\n    \"abilities\": [\n        \"act-as:client\"\n    ],\n    \"mode\": \"client\",\n    \"is_new_user\": false,\n    \"needs_profile\": true,\n    \"needs_phone\": false,\n    \"user\": {\n        \"id\": 7,\n        \"name\": \"Mona Adel\",\n        \"phone\": \"+201000000002\",\n        \"email\": null,\n        \"date_of_birth\": null,\n        \"active_mode\": \"client\",\n        \"locale\": \"ar\",\n        \"is_active\": true,\n        \"is_client\": false,\n        \"is_merchant\": false,\n        \"has_password\": false,\n        \"phone_verified\": true,\n        \"email_verified\": false,\n        \"created_at\": \"2026-08-29T15:19:13.000000Z\"\n    }\n}"
+                        },
+                        {
+                            "name": "Invalid or expired code (422)",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp}}\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/otp/login"
+                            },
+                            "status": "Unprocessable Entity",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"The verification code is invalid or has expired.\",\n    \"errors\": {\n        \"code\": [\n            \"The verification code is invalid or has expired.\"\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Challenge (link phone)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"phone\": \"+201000000099\",\n  \"purpose\": \"link\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/otp/challenge",
+                        "description": "Send OTP before linking a phone to an existing account."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"phone\": \"+201000000099\",\n  \"purpose\": \"link\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/otp/challenge",
+                                "description": "Send OTP before linking a phone to an existing account."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Verification code sent.\",\n    \"expires_in\": 300\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Password",
+            "item": [
+                {
+                    "name": "Register",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "  pm.collectionVariables.set('token', pm.response.json().token);",
+                                    "  pm.environment.set('token', pm.response.json().token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Shop Owner\",\n  \"phone\": \"{{phone}}\",\n  \"email\": \"owner@example.com\",\n  \"password\": \"secret123\",\n  \"remember_me\": true,\n  \"date_of_birth\": \"1990-05-20\",\n  \"user_type\": \"merchant\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/password/register"
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Shop Owner\",\n  \"phone\": \"{{phone}}\",\n  \"email\": \"owner@example.com\",\n  \"password\": \"secret123\",\n  \"remember_me\": true,\n  \"date_of_birth\": \"1990-05-20\",\n  \"user_type\": \"merchant\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/password/register"
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"token\": \"<REDACTED_TOKEN>\",\n    \"token_type\": \"Bearer\",\n    \"abilities\": [\n        \"act-as:client\"\n    ],\n    \"mode\": \"client\",\n    \"is_new_user\": true,\n    \"needs_profile\": true,\n    \"needs_phone\": false,\n    \"user\": {\n        \"id\": 8,\n        \"name\": \"Youssef Kamal\",\n        \"phone\": \"+201000000011\",\n        \"email\": \"youssef@example.com\",\n        \"date_of_birth\": null,\n        \"active_mode\": \"client\",\n        \"locale\": \"ar\",\n        \"is_active\": true,\n        \"is_client\": false,\n        \"is_merchant\": false,\n        \"has_password\": true,\n        \"phone_verified\": false,\n        \"email_verified\": false,\n        \"created_at\": \"2026-08-29T15:19:48.000000Z\"\n    }\n}"
+                        },
+                        {
+                            "name": "Validation error (422)",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Shop Owner\",\n  \"phone\": \"{{phone}}\",\n  \"email\": \"owner@example.com\",\n  \"password\": \"secret123\",\n  \"remember_me\": true,\n  \"date_of_birth\": \"1990-05-20\",\n  \"user_type\": \"merchant\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/password/register"
+                            },
+                            "status": "Unprocessable Entity",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"The phone has already been taken. (and 2 more errors)\",\n    \"errors\": {\n        \"phone\": [\n            \"The phone has already been taken.\"\n        ],\n        \"email\": [\n            \"The email field must be a valid email address.\"\n        ],\n        \"password\": [\n            \"The password field must be at least 8 characters.\"\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "  pm.collectionVariables.set('token', pm.response.json().token);",
+                                    "  pm.environment.set('token', pm.response.json().token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"owner@example.com\",\n  \"password\": \"secret123\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/password/login"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"owner@example.com\",\n  \"password\": \"secret123\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/password/login"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"token\": \"<REDACTED_TOKEN>\",\n    \"token_type\": \"Bearer\",\n    \"abilities\": [\n        \"act-as:client\"\n    ],\n    \"mode\": \"client\",\n    \"is_new_user\": false,\n    \"needs_profile\": true,\n    \"needs_phone\": false,\n    \"user\": {\n        \"id\": 8,\n        \"name\": \"Youssef Kamal\",\n        \"phone\": \"+201000000011\",\n        \"email\": \"youssef@example.com\",\n        \"date_of_birth\": null,\n        \"active_mode\": \"client\",\n        \"locale\": \"ar\",\n        \"is_active\": true,\n        \"is_client\": false,\n        \"is_merchant\": false,\n        \"has_password\": true,\n        \"phone_verified\": false,\n        \"email_verified\": false,\n        \"created_at\": \"2026-08-29T15:19:48.000000Z\"\n    }\n}"
+                        },
+                        {
+                            "name": "Wrong credentials (422)",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"owner@example.com\",\n  \"password\": \"secret123\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/password/login"
+                            },
+                            "status": "Unprocessable Entity",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"These credentials do not match our records.\",\n    \"errors\": {\n        \"credentials\": [\n            \"These credentials do not match our records.\"\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Forgot password",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"phone\": \"{{phone}}\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/password/forgot"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"phone\": \"{{phone}}\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/password/forgot"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"If an account exists for this number, a reset code has been sent.\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Reset password",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "  pm.collectionVariables.set('token', pm.response.json().token);",
+                                    "  pm.environment.set('token', pm.response.json().token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp}}\",\n  \"password\": \"newsecret1\",\n  \"password_confirmation\": \"newsecret1\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/password/reset"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp}}\",\n  \"password\": \"newsecret1\",\n  \"password_confirmation\": \"newsecret1\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/password/reset"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"token\": \"<REDACTED_TOKEN>\",\n    \"token_type\": \"Bearer\",\n    \"abilities\": [\n        \"act-as:client\"\n    ],\n    \"mode\": \"client\",\n    \"is_new_user\": false,\n    \"needs_profile\": true,\n    \"needs_phone\": false,\n    \"user\": {\n        \"id\": 8,\n        \"name\": \"Youssef Kamal\",\n        \"phone\": \"+201000000011\",\n        \"email\": \"youssef@example.com\",\n        \"date_of_birth\": null,\n        \"active_mode\": \"client\",\n        \"locale\": \"ar\",\n        \"is_active\": true,\n        \"is_client\": false,\n        \"is_merchant\": false,\n        \"has_password\": true,\n        \"phone_verified\": false,\n        \"email_verified\": false,\n        \"created_at\": \"2026-08-29T15:19:48.000000Z\"\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Google",
+            "description": "Google sign-in for the mobile app. The client obtains an ID token from the Google SDK and posts it here; the server verifies it against the client IDs in GOOGLE_CLIENT_IDS.",
+            "item": [
+                {
+                    "name": "Sign in / sign up",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "  pm.collectionVariables.set('token', pm.response.json().token);",
+                                    "  pm.environment.set('token', pm.response.json().token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"id_token\": \"{{googleIdToken}}\",\n  \"user_type\": \"client\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/google/login",
+                        "description": "Sign-in and sign-up are the same call. A first-time token creates the account (is_new_user = true); a returning token is matched on the Google subject. Google never supplies a phone number, so the response sets needs_phone = true and the app must run the OTP link step next."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"id_token\": \"{{googleIdToken}}\",\n  \"user_type\": \"client\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/google/login",
+                                "description": "Sign-in and sign-up are the same call. A first-time token creates the account (is_new_user = true); a returning token is matched on the Google subject. Google never supplies a phone number, so the response sets needs_phone = true and the app must run the OTP link step next."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"token\": \"<REDACTED_TOKEN>\",\n    \"token_type\": \"Bearer\",\n    \"abilities\": [\n        \"act-as:client\"\n    ],\n    \"mode\": \"client\",\n    \"is_new_user\": true,\n    \"needs_profile\": true,\n    \"needs_phone\": true,\n    \"user\": {\n        \"id\": 9,\n        \"name\": \"Nour\",\n        \"phone\": null,\n        \"email\": \"nour@example.com\",\n        \"date_of_birth\": null,\n        \"active_mode\": \"client\",\n        \"locale\": \"ar\",\n        \"is_active\": true,\n        \"is_client\": false,\n        \"is_merchant\": false,\n        \"has_password\": false,\n        \"phone_verified\": false,\n        \"email_verified\": true,\n        \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n    }\n}"
+                        },
+                        {
+                            "name": "Returning user",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"id_token\": \"{{googleIdToken}}\",\n  \"user_type\": \"client\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/google/login",
+                                "description": "Sign-in and sign-up are the same call. A first-time token creates the account (is_new_user = true); a returning token is matched on the Google subject. Google never supplies a phone number, so the response sets needs_phone = true and the app must run the OTP link step next."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"token\": \"<REDACTED_TOKEN>\",\n    \"token_type\": \"Bearer\",\n    \"abilities\": [\n        \"act-as:client\"\n    ],\n    \"mode\": \"client\",\n    \"is_new_user\": false,\n    \"needs_profile\": true,\n    \"needs_phone\": true,\n    \"user\": {\n        \"id\": 9,\n        \"name\": \"Nour\",\n        \"phone\": null,\n        \"email\": \"nour@example.com\",\n        \"date_of_birth\": null,\n        \"active_mode\": \"client\",\n        \"locale\": \"ar\",\n        \"is_active\": true,\n        \"is_client\": false,\n        \"is_merchant\": false,\n        \"has_password\": false,\n        \"phone_verified\": false,\n        \"email_verified\": true,\n        \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Register",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "  pm.collectionVariables.set('token', pm.response.json().token);",
+                                    "  pm.environment.set('token', pm.response.json().token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"id_token\": \"{{googleIdToken}}\",\n  \"user_type\": \"client\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/google/register",
+                        "description": "Explicit registration endpoint. Same strategy as login but returns 201 for a newly created account."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"id_token\": \"{{googleIdToken}}\",\n  \"user_type\": \"client\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/google/register",
+                                "description": "Explicit registration endpoint. Same strategy as login but returns 201 for a newly created account."
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"token\": \"<REDACTED_TOKEN>\",\n    \"token_type\": \"Bearer\",\n    \"abilities\": [\n        \"act-as:client\"\n    ],\n    \"mode\": \"client\",\n    \"is_new_user\": true,\n    \"needs_profile\": true,\n    \"needs_phone\": true,\n    \"user\": {\n        \"id\": 10,\n        \"name\": \"Lina\",\n        \"phone\": null,\n        \"email\": \"lina@example.com\",\n        \"date_of_birth\": null,\n        \"active_mode\": \"client\",\n        \"locale\": \"ar\",\n        \"is_active\": true,\n        \"is_client\": false,\n        \"is_merchant\": false,\n        \"has_password\": false,\n        \"phone_verified\": false,\n        \"email_verified\": true,\n        \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Link Google",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"id_token\": \"{{googleIdToken}}\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/link/google",
+                        "description": "Attach a Google identity to the authenticated account so the user can sign in either way. Requires a bearer token."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"id_token\": \"{{googleIdToken}}\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/link/google",
+                                "description": "Attach a Google identity to the authenticated account so the user can sign in either way. Requires a bearer token."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"linked\": \"google\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Account (authenticated)",
+            "item": [
+                {
+                    "name": "Me",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/auth/me"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/auth/me"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 12,\n    \"name\": \"Salma Farid\",\n    \"phone\": \"+201000000021\",\n    \"email\": \"salma@example.com\",\n    \"date_of_birth\": null,\n    \"active_mode\": \"client\",\n    \"locale\": \"ar\",\n    \"is_active\": true,\n    \"is_client\": true,\n    \"is_merchant\": true,\n    \"has_password\": true,\n    \"phone_verified\": true,\n    \"email_verified\": false,\n    \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n}"
+                        },
+                        {
+                            "name": "Unauthenticated (401)",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/auth/me"
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Unauthenticated.\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Switch mode",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "  pm.collectionVariables.set('token', pm.response.json().token);",
+                                    "  pm.environment.set('token', pm.response.json().token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"mode\": \"merchant\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/switch-mode",
+                        "description": "mode: client | merchant. Requires matching profile."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"mode\": \"merchant\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/switch-mode",
+                                "description": "mode: client | merchant. Requires matching profile."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"token\": \"<REDACTED_TOKEN>\",\n    \"token_type\": \"Bearer\",\n    \"abilities\": [\n        \"act-as:merchant\"\n    ],\n    \"mode\": \"merchant\",\n    \"is_new_user\": false,\n    \"needs_profile\": false,\n    \"needs_phone\": false,\n    \"user\": {\n        \"id\": 12,\n        \"name\": \"Salma Farid\",\n        \"phone\": \"+201000000021\",\n        \"email\": \"salma@example.com\",\n        \"date_of_birth\": null,\n        \"active_mode\": \"merchant\",\n        \"locale\": \"ar\",\n        \"is_active\": true,\n        \"is_client\": true,\n        \"is_merchant\": true,\n        \"has_password\": true,\n        \"phone_verified\": true,\n        \"email_verified\": false,\n        \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Link password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"password\": \"secret123\",\n  \"password_confirmation\": \"secret123\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/link/password"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"password\": \"secret123\",\n  \"password_confirmation\": \"secret123\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/link/password"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"linked\": \"password\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Link OTP (phone)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"phone\": \"+201000000099\",\n  \"code\": \"{{otp}}\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/auth/link/otp"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"phone\": \"+201000000099\",\n  \"code\": \"{{otp}}\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/auth/link/otp"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"linked\": \"otp\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Unlink provider",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/auth/link/google"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/auth/link/google"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"unlinked\": \"google\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/auth/logout"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/auth/logout"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Logged out.\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Logout all",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/auth/logout-all"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/auth/logout-all"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Logged out from all devices.\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "User (sanctum check)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/user"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/user"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 12,\n    \"name\": \"Salma Farid\",\n    \"phone\": \"+201000000021\",\n    \"email\": \"salma@example.com\",\n    \"phone_verified_at\": \"2026-08-29T15:20:23.000000Z\",\n    \"email_verified_at\": null,\n    \"active_mode\": \"client\",\n    \"locale\": \"ar\",\n    \"is_active\": true,\n    \"created_at\": \"2026-08-29T15:20:23.000000Z\",\n    \"updated_at\": \"2026-08-29T15:20:23.000000Z\",\n    \"date_of_birth\": null\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Cars (client)",
+            "item": [
+                {
+                    "name": "Add car (generate QR)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "  pm.collectionVariables.set('carId', pm.response.json().id);",
+                                    "  pm.collectionVariables.set('qrCode', pm.response.json().qr_code);",
+                                    "  pm.environment.set('carId', pm.response.json().id);",
+                                    "  pm.environment.set('qrCode', pm.response.json().qr_code);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "plate_number",
+                                    "value": "ABC 1234",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "make",
+                                    "value": "Kia",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "model",
+                                    "value": "Sportage",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "color",
+                                    "value": "Black",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "photo",
+                                    "type": "file",
+                                    "src": [],
+                                    "description": "Optional"
+                                }
+                            ]
+                        },
+                        "url": "{{baseUrl}}/api/cars",
+                        "description": "Requires client-mode token (act-as:client)."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "plate_number",
+                                            "value": "ABC 1234",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "make",
+                                            "value": "Kia",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "model",
+                                            "value": "Sportage",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "color",
+                                            "value": "Black",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "photo",
+                                            "type": "file",
+                                            "src": [],
+                                            "description": "Optional"
+                                        }
+                                    ]
+                                },
+                                "url": "{{baseUrl}}/api/cars",
+                                "description": "Requires client-mode token (act-as:client)."
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 1,\n    \"plate_number\": \"ABC 1234\",\n    \"make\": \"Kia\",\n    \"model\": \"Sportage\",\n    \"color\": \"Black\",\n    \"photo_url\": \"https://qar-4uh5.onrender.com/storage/cars/ZIKwlEXAx8XRdDJATjllXIGrGndXD93bxm7V32JX.jpg\",\n    \"qr_code\": \"QAR-PCYJRHWRN0\",\n    \"qr_url\": \"https://qar-4uh5.onrender.com/storage/qr/QAR-PCYJRHWRN0.svg\",\n    \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n}"
+                        },
+                        {
+                            "name": "Validation error (422)",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "plate_number",
+                                            "value": "ABC 1234",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "make",
+                                            "value": "Kia",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "model",
+                                            "value": "Sportage",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "color",
+                                            "value": "Black",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "photo",
+                                            "type": "file",
+                                            "src": [],
+                                            "description": "Optional"
+                                        }
+                                    ]
+                                },
+                                "url": "{{baseUrl}}/api/cars",
+                                "description": "Requires client-mode token (act-as:client)."
+                            },
+                            "status": "Unprocessable Entity",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"The plate number field is required.\",\n    \"errors\": {\n        \"plate_number\": [\n            \"The plate number field is required.\"\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "List my cars",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/cars"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/cars"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "[\n    {\n        \"id\": 1,\n        \"plate_number\": \"ABC 1234\",\n        \"make\": \"Kia\",\n        \"model\": \"Sportage\",\n        \"color\": \"Black\",\n        \"photo_url\": \"https://qar-4uh5.onrender.com/storage/cars/ZIKwlEXAx8XRdDJATjllXIGrGndXD93bxm7V32JX.jpg\",\n        \"qr_code\": \"QAR-PCYJRHWRN0\",\n        \"qr_url\": \"https://qar-4uh5.onrender.com/storage/qr/QAR-PCYJRHWRN0.svg\",\n        \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n    }\n]"
+                        },
+                        {
+                            "name": "Unauthenticated (401)",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/cars"
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Unauthenticated.\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Show car",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/cars/{{carId}}"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/cars/{{carId}}"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 1,\n    \"plate_number\": \"ABC 1234\",\n    \"make\": \"Kia\",\n    \"model\": \"Sportage\",\n    \"color\": \"Black\",\n    \"photo_url\": \"https://qar-4uh5.onrender.com/storage/cars/ZIKwlEXAx8XRdDJATjllXIGrGndXD93bxm7V32JX.jpg\",\n    \"qr_code\": \"QAR-PCYJRHWRN0\",\n    \"qr_url\": \"https://qar-4uh5.onrender.com/storage/qr/QAR-PCYJRHWRN0.svg\",\n    \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n}"
+                        },
+                        {
+                            "name": "Not the owner (403)",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/cars/{{carId}}"
+                            },
+                            "status": "Forbidden",
+                            "code": 403,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"\",\n    \"exception\": \"Symfony\\\\Component\\\\HttpKernel\\\\Exception\\\\HttpException\",\n    \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Application.php\",\n    \"line\": 1277,\n    \"trace\": [\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/helpers.php\",\n            \"line\": 45,\n            \"function\": \"abort\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/helpers.php\",\n            \"line\": 86,\n            \"function\": \"abort\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/app/Http/Controllers/Api/CarController.php\",\n            \"line\": 75,\n            \"function\": \"abort_unless\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/app/Http/Controllers/Api/CarController.php\",\n            \"line\": 59,\n            \"function\": \"authorizeOwnership\",\n            \"class\": \"App\\\\Http\\\\Controllers\\\\Api\\\\CarController\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Controller.php\",\n            \"line\": 54,\n            \"function\": \"show\",\n            \"class\": \"App\\\\Http\\\\Controllers\\\\Api\\\\CarController\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php\",\n            \"line\": 43,\n            \"function\": \"callAction\",\n            \"class\": \"Illuminate\\\\Routing\\\\Controller\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Route.php\",\n            \"line\": 260,\n            \"function\": \"dispatch\",\n            \"class\": \"Illuminate\\\\Routing\\\\ControllerDispatcher\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Route.php\",\n            \"line\": 205,\n            \"function\": \"runController\",\n            \"class\": \"Illuminate\\\\Routing\\\\Route\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Router.php\",\n            \"line\": 806,\n            \"function\": \"run\",\n            \"class\": \"Illuminate\\\\Routing\\\\Route\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 144,\n            \"function\": \"Illuminate\\\\Routing\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/sanctum/src/Http/Middleware/CheckForAnyAbility.php\",\n            \"line\": 28,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Laravel\\\\Sanctum\\\\Http\\\\Middleware\\\\CheckForAnyAbility\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php\",\n            \"line\": 50,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Routing\\\\Middleware\\\\SubstituteBindings\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php\",\n            \"line\": 180,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"class@anonymous\\u0000/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php:176$dd\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php\",\n            \"line\": 57,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Auth\\\\Middleware\\\\Authenticate\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 119,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Router.php\",\n            \"line\": 807,\n            \"function\": \"then\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Router.php\",\n            \"line\": 784,\n            \"function\": \"runRouteWithinStack\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Router.php\",\n            \"line\": 748,\n            \"function\": \"runRoute\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Router.php\",\n            \"line\": 737,\n            \"function\": \"dispatchToRoute\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php\",\n            \"line\": 200,\n            \"function\": \"dispatch\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 144,\n            \"function\": \"Illuminate\\\\Foundation\\\\Http\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Kernel\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/livewire/livewire/src/Features/SupportDisablingBackButtonCache/DisableBackButtonCacheMiddleware.php\",\n            \"line\": 19,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Livewire\\\\Features\\\\SupportDisablingBackButtonCache\\\\DisableBackButtonCacheMiddleware\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php\",\n            \"line\": 21,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php\",\n            \"line\": 31,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TransformsRequest\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\ConvertEmptyStringsToNull\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php\",\n            \"line\": 21,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php\",\n            \"line\": 40,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TransformsRequest\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TrimStrings\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php\",\n            \"line\": 27,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\ValidatePostSize\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php\",\n            \"line\": 99,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\PreventRequestsDuringMaintenance\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php\",\n            \"line\": 62,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Http\\\\Middleware\\\\HandleCors\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php\",\n            \"line\": 39,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Http\\\\Middleware\\\\TrustProxies\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 119,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php\",\n            \"line\": 175,\n            \"function\": \"then\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php\",\n            \"line\": 144,\n            \"function\": \"sendRequestThroughRouter\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Kernel\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php\",\n            \"line\": 586,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Kernel\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php\",\n            \"line\": 552,\n            \"function\": \"call\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Testing\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php\",\n            \"line\": 359,\n            \"function\": \"json\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Testing\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/tests/Feature/Api/ApiExampleResponsesTest.php\",\n            \"line\": 465,\n            \"function\": \"getJson\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Testing\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/tests/Feature/Api/ApiExampleResponsesTest.php\",\n            \"line\": 130,\n            \"function\": \"captureCarsFolder\",\n            \"class\": \"Tests\\\\Feature\\\\Api\\\\ApiExampleResponsesTest\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestCase.php\",\n            \"line\": 1548,\n            \"function\": \"test_it_captures_a_response_example_for_every_api_endpoint\",\n            \"class\": \"Tests\\\\Feature\\\\Api\\\\ApiExampleResponsesTest\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestCase.php\",\n            \"line\": 686,\n            \"function\": \"runTest\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestRunner.php\",\n            \"line\": 106,\n            \"function\": \"runBare\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestCase.php\",\n            \"line\": 516,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestRunner\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestSuite.php\",\n            \"line\": 374,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestSuite.php\",\n            \"line\": 374,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestSuite\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestSuite.php\",\n            \"line\": 374,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestSuite\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/TextUI/TestRunner.php\",\n            \"line\": 64,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestSuite\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/TextUI/Application.php\",\n            \"line\": 205,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\TextUI\\\\TestRunner\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/phpunit\",\n            \"line\": 104,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\TextUI\\\\Application\",\n            \"type\": \"->\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete car",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/cars/{{carId}}"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/cars/{{carId}}"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Car deleted.\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "QR scan (public)",
+            "item": [
+                {
+                    "name": "Scan QR code",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/scan/{{qrCode}}",
+                        "description": "Public stranger view. No auth. Owner phone never returned."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/scan/{{qrCode}}",
+                                "description": "Public stranger view. No auth. Owner phone never returned."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"headline\": \"Does this car need its owner?\",\n    \"car\": {\n        \"make\": \"Kia\",\n        \"model\": \"Sportage\",\n        \"color\": \"Black\",\n        \"plate_number\": \"ABC 1234\",\n        \"photo_url\": null\n    },\n    \"actions\": [\n        {\n            \"type\": \"double_parked\",\n            \"label\": \"It's double-parked / blocking\"\n        },\n        {\n            \"type\": \"lights_on\",\n            \"label\": \"Lights are on\"\n        },\n        {\n            \"type\": \"danger\",\n            \"label\": \"Danger around the car\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "Unknown code (404)",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/scan/{{qrCode}}",
+                                "description": "Public stranger view. No auth. Owner phone never returned."
+                            },
+                            "status": "Not Found",
+                            "code": 404,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Car not found.\",\n    \"exception\": \"Symfony\\\\Component\\\\HttpKernel\\\\Exception\\\\NotFoundHttpException\",\n    \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Application.php\",\n    \"line\": 1274,\n    \"trace\": [\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/helpers.php\",\n            \"line\": 45,\n            \"function\": \"abort\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/app/Http/Controllers/Api/QrScanController.php\",\n            \"line\": 57,\n            \"function\": \"abort\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/app/Http/Controllers/Api/QrScanController.php\",\n            \"line\": 21,\n            \"function\": \"resolveScannableCar\",\n            \"class\": \"App\\\\Http\\\\Controllers\\\\Api\\\\QrScanController\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Controller.php\",\n            \"line\": 54,\n            \"function\": \"show\",\n            \"class\": \"App\\\\Http\\\\Controllers\\\\Api\\\\QrScanController\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php\",\n            \"line\": 43,\n            \"function\": \"callAction\",\n            \"class\": \"Illuminate\\\\Routing\\\\Controller\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Route.php\",\n            \"line\": 260,\n            \"function\": \"dispatch\",\n            \"class\": \"Illuminate\\\\Routing\\\\ControllerDispatcher\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Route.php\",\n            \"line\": 205,\n            \"function\": \"runController\",\n            \"class\": \"Illuminate\\\\Routing\\\\Route\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Router.php\",\n            \"line\": 806,\n            \"function\": \"run\",\n            \"class\": \"Illuminate\\\\Routing\\\\Route\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 144,\n            \"function\": \"Illuminate\\\\Routing\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php\",\n            \"line\": 50,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Routing\\\\Middleware\\\\SubstituteBindings\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php\",\n            \"line\": 180,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"class@anonymous\\u0000/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php:176$dd\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php\",\n            \"line\": 180,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"class@anonymous\\u0000/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php:176$dd\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 119,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Router.php\",\n            \"line\": 807,\n            \"function\": \"then\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Router.php\",\n            \"line\": 784,\n            \"function\": \"runRouteWithinStack\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Router.php\",\n            \"line\": 748,\n            \"function\": \"runRoute\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Routing/Router.php\",\n            \"line\": 737,\n            \"function\": \"dispatchToRoute\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php\",\n            \"line\": 200,\n            \"function\": \"dispatch\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 144,\n            \"function\": \"Illuminate\\\\Foundation\\\\Http\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Kernel\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/livewire/livewire/src/Features/SupportDisablingBackButtonCache/DisableBackButtonCacheMiddleware.php\",\n            \"line\": 19,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Livewire\\\\Features\\\\SupportDisablingBackButtonCache\\\\DisableBackButtonCacheMiddleware\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php\",\n            \"line\": 21,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php\",\n            \"line\": 31,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TransformsRequest\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\ConvertEmptyStringsToNull\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php\",\n            \"line\": 21,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php\",\n            \"line\": 40,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TransformsRequest\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TrimStrings\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php\",\n            \"line\": 27,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\ValidatePostSize\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php\",\n            \"line\": 99,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\PreventRequestsDuringMaintenance\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php\",\n            \"line\": 62,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Http\\\\Middleware\\\\HandleCors\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php\",\n            \"line\": 39,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 183,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Http\\\\Middleware\\\\TrustProxies\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php\",\n            \"line\": 119,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php\",\n            \"line\": 175,\n            \"function\": \"then\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php\",\n            \"line\": 144,\n            \"function\": \"sendRequestThroughRouter\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Kernel\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php\",\n            \"line\": 586,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Kernel\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php\",\n            \"line\": 552,\n            \"function\": \"call\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Testing\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php\",\n            \"line\": 359,\n            \"function\": \"json\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Testing\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/tests/Feature/Api/ApiExampleResponsesTest.php\",\n            \"line\": 496,\n            \"function\": \"getJson\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Testing\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/tests/Feature/Api/ApiExampleResponsesTest.php\",\n            \"line\": 131,\n            \"function\": \"captureQrScanFolder\",\n            \"class\": \"Tests\\\\Feature\\\\Api\\\\ApiExampleResponsesTest\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestCase.php\",\n            \"line\": 1548,\n            \"function\": \"test_it_captures_a_response_example_for_every_api_endpoint\",\n            \"class\": \"Tests\\\\Feature\\\\Api\\\\ApiExampleResponsesTest\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestCase.php\",\n            \"line\": 686,\n            \"function\": \"runTest\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestRunner.php\",\n            \"line\": 106,\n            \"function\": \"runBare\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestCase.php\",\n            \"line\": 516,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestRunner\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestSuite.php\",\n            \"line\": 374,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestCase\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestSuite.php\",\n            \"line\": 374,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestSuite\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/Framework/TestSuite.php\",\n            \"line\": 374,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestSuite\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/TextUI/TestRunner.php\",\n            \"line\": 64,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\Framework\\\\TestSuite\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/src/TextUI/Application.php\",\n            \"line\": 205,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\TextUI\\\\TestRunner\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"/Users/sherif/sites/Qar/vendor/phpunit/phpunit/phpunit\",\n            \"line\": 104,\n            \"function\": \"run\",\n            \"class\": \"PHPUnit\\\\TextUI\\\\Application\",\n            \"type\": \"->\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Send alert",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"double_parked\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/scan/{{qrCode}}/alerts",
+                        "description": "type: double_parked | lights_on | danger"
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"type\": \"double_parked\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/scan/{{qrCode}}/alerts",
+                                "description": "type: double_parked | lights_on | danger"
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Alert sent.\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Print requests (client)",
+            "item": [
+                {
+                    "name": "Create print request",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "  pm.collectionVariables.set('printRequestId', pm.response.json().id);",
+                                    "  pm.environment.set('printRequestId', pm.response.json().id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"car_id\": {{carId}},\n  \"quantity\": 1,\n  \"shipping_address\": \"12 Tahrir St, Cairo\",\n  \"notes\": \"Please print glossy\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/print-requests",
+                        "description": "Requires active subscription."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"car_id\": {{carId}},\n  \"quantity\": 1,\n  \"shipping_address\": \"12 Tahrir St, Cairo\",\n  \"notes\": \"Please print glossy\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/print-requests",
+                                "description": "Requires active subscription."
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 1,\n    \"status\": \"pending\",\n    \"quantity\": 2,\n    \"shipping_address\": \"12 Tahrir St, Cairo\",\n    \"notes\": \"Please ship before the weekend.\",\n    \"ready_at\": null,\n    \"delivered_at\": null,\n    \"created_at\": \"2026-08-29T15:20:23.000000Z\",\n    \"car\": {\n        \"id\": 4,\n        \"plate_number\": \"ABC 1234\",\n        \"qr_code\": \"QAR-9VONKTCSUA\",\n        \"qr_url\": \"https://qar-4uh5.onrender.com/storage/qr/QAR-9VONKTCSUA.svg\"\n    }\n}"
+                        },
+                        {
+                            "name": "No active subscription (403)",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"car_id\": {{carId}},\n  \"quantity\": 1,\n  \"shipping_address\": \"12 Tahrir St, Cairo\",\n  \"notes\": \"Please print glossy\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/print-requests",
+                                "description": "Requires active subscription."
+                            },
+                            "status": "Forbidden",
+                            "code": 403,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"An active subscription is required to request a printed QR code.\",\n    \"code\": \"subscription_required\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "List my print requests",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/print-requests"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/print-requests"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "[\n    {\n        \"id\": 1,\n        \"status\": \"pending\",\n        \"quantity\": 2,\n        \"shipping_address\": \"12 Tahrir St, Cairo\",\n        \"notes\": \"Please ship before the weekend.\",\n        \"ready_at\": null,\n        \"delivered_at\": null,\n        \"created_at\": \"2026-08-29T15:20:23.000000Z\",\n        \"car\": {\n            \"id\": 4,\n            \"plate_number\": \"ABC 1234\",\n            \"qr_code\": \"QAR-9VONKTCSUA\",\n            \"qr_url\": \"https://qar-4uh5.onrender.com/storage/qr/QAR-9VONKTCSUA.svg\"\n        }\n    }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Show print request",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/print-requests/{{printRequestId}}"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/print-requests/{{printRequestId}}"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 1,\n    \"status\": \"pending\",\n    \"quantity\": 2,\n    \"shipping_address\": \"12 Tahrir St, Cairo\",\n    \"notes\": \"Please ship before the weekend.\",\n    \"ready_at\": null,\n    \"delivered_at\": null,\n    \"created_at\": \"2026-08-29T15:20:23.000000Z\",\n    \"car\": {\n        \"id\": 4,\n        \"plate_number\": \"ABC 1234\",\n        \"qr_code\": \"QAR-9VONKTCSUA\",\n        \"qr_url\": \"https://qar-4uh5.onrender.com/storage/qr/QAR-9VONKTCSUA.svg\"\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Packages (public)",
+            "item": [
+                {
+                    "name": "List packages",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "  const data = pm.response.json();",
+                                    "  const list = Array.isArray(data) ? data : (data.data || []);",
+                                    "  if (list.length > 0) {",
+                                    "    pm.collectionVariables.set('packageId', list[0].id);",
+                                    "    pm.environment.set('packageId', list[0].id);",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/packages",
+                        "description": "Browse monthly / semi-annual / yearly subscription packages."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/packages",
+                                "description": "Browse monthly / semi-annual / yearly subscription packages."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "[\n    {\n        \"id\": 1,\n        \"name\": \"Monthly\",\n        \"slug\": \"monthly\",\n        \"period\": \"monthly\",\n        \"duration_months\": 1,\n        \"price\": \"99.00\",\n        \"currency\": \"EGP\",\n        \"description\": \"Billed every month.\"\n    },\n    {\n        \"id\": 2,\n        \"name\": \"6 Months\",\n        \"slug\": \"semi-annual\",\n        \"period\": \"semi_annual\",\n        \"duration_months\": 6,\n        \"price\": \"499.00\",\n        \"currency\": \"EGP\",\n        \"description\": \"Billed every 6 months.\"\n    },\n    {\n        \"id\": 3,\n        \"name\": \"Yearly\",\n        \"slug\": \"annual\",\n        \"period\": \"annual\",\n        \"duration_months\": 12,\n        \"price\": \"899.00\",\n        \"currency\": \"EGP\",\n        \"description\": \"Billed every year.\"\n    }\n]"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Subscriptions (client)",
+            "item": [
+                {
+                    "name": "Subscribe (cash)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "  const sub = pm.response.json().subscription;",
+                                    "  if (sub && sub.id) {",
+                                    "    pm.collectionVariables.set('subscriptionId', sub.id);",
+                                    "    pm.environment.set('subscriptionId', sub.id);",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"package_id\": {{packageId}},\n  \"payment_method\": \"cash\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/subscriptions",
+                        "description": "Cash payment stays pending until admin confirms in Filament."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"package_id\": {{packageId}},\n  \"payment_method\": \"cash\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/subscriptions",
+                                "description": "Cash payment stays pending until admin confirms in Filament."
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"subscription\": {\n        \"id\": 1,\n        \"status\": \"pending\",\n        \"is_active\": false,\n        \"period\": \"monthly\",\n        \"duration_months\": 1,\n        \"price\": \"99.00\",\n        \"currency\": \"EGP\",\n        \"starts_at\": null,\n        \"ends_at\": null,\n        \"cancelled_at\": null,\n        \"created_at\": \"2026-08-29T15:20:23.000000Z\",\n        \"package\": {\n            \"id\": 1,\n            \"name\": \"Monthly\",\n            \"slug\": \"monthly\",\n            \"period\": \"monthly\",\n            \"duration_months\": 1,\n            \"price\": \"99.00\",\n            \"currency\": \"EGP\",\n            \"description\": \"Billed every month.\"\n        },\n        \"payments\": [\n            {\n                \"id\": 1,\n                \"method\": \"cash\",\n                \"status\": \"pending\",\n                \"amount\": \"99.00\",\n                \"currency\": \"EGP\",\n                \"reference\": \"QAR-4GDUTBUCKBZWQQYDNXHZ\",\n                \"paid_at\": null,\n                \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n            }\n        ]\n    },\n    \"payment\": {\n        \"method\": \"cash\",\n        \"status\": \"pending\",\n        \"reference\": \"QAR-4GDUTBUCKBZWQQYDNXHZ\",\n        \"requires_redirect\": false,\n        \"checkout_url\": null,\n        \"message\": \"Your subscription will be activated once your cash payment is confirmed.\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Subscribe (paymob)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "  const sub = pm.response.json().subscription;",
+                                    "  if (sub && sub.id) {",
+                                    "    pm.collectionVariables.set('subscriptionId', sub.id);",
+                                    "    pm.environment.set('subscriptionId', sub.id);",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"package_id\": {{packageId}},\n  \"payment_method\": \"paymob\"\n}"
+                        },
+                        "url": "{{baseUrl}}/api/subscriptions",
+                        "description": "Returns checkout_url when Paymob redirect is required."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"package_id\": {{packageId}},\n  \"payment_method\": \"paymob\"\n}"
+                                },
+                                "url": "{{baseUrl}}/api/subscriptions",
+                                "description": "Returns checkout_url when Paymob redirect is required."
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"subscription\": {\n        \"id\": 2,\n        \"status\": \"pending\",\n        \"is_active\": false,\n        \"period\": \"monthly\",\n        \"duration_months\": 1,\n        \"price\": \"99.00\",\n        \"currency\": \"EGP\",\n        \"starts_at\": null,\n        \"ends_at\": null,\n        \"cancelled_at\": null,\n        \"created_at\": \"2026-08-29T15:20:23.000000Z\",\n        \"package\": {\n            \"id\": 1,\n            \"name\": \"Monthly\",\n            \"slug\": \"monthly\",\n            \"period\": \"monthly\",\n            \"duration_months\": 1,\n            \"price\": \"99.00\",\n            \"currency\": \"EGP\",\n            \"description\": \"Billed every month.\"\n        },\n        \"payments\": [\n            {\n                \"id\": 2,\n                \"method\": \"paymob\",\n                \"status\": \"pending\",\n                \"amount\": \"99.00\",\n                \"currency\": \"EGP\",\n                \"reference\": \"QAR-TDH1YH9NL799OQRTZ7NS\",\n                \"paid_at\": null,\n                \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n            }\n        ]\n    },\n    \"payment\": {\n        \"method\": \"paymob\",\n        \"status\": \"pending\",\n        \"reference\": \"QAR-TDH1YH9NL799OQRTZ7NS\",\n        \"requires_redirect\": true,\n        \"checkout_url\": \"https://accept.paymob.com/unifiedcheckout/?publicKey=&clientSecret=fake_QAR-TDH1YH9NL799OQRTZ7NS\",\n        \"message\": \"Paymob is running in fake mode; no real charge will occur.\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "List my subscriptions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/subscriptions"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/subscriptions"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "[\n    {\n        \"id\": 1,\n        \"status\": \"pending\",\n        \"is_active\": false,\n        \"period\": \"monthly\",\n        \"duration_months\": 1,\n        \"price\": \"99.00\",\n        \"currency\": \"EGP\",\n        \"starts_at\": null,\n        \"ends_at\": null,\n        \"cancelled_at\": null,\n        \"created_at\": \"2026-08-29T15:20:23.000000Z\",\n        \"package\": {\n            \"id\": 1,\n            \"name\": \"Monthly\",\n            \"slug\": \"monthly\",\n            \"period\": \"monthly\",\n            \"duration_months\": 1,\n            \"price\": \"99.00\",\n            \"currency\": \"EGP\",\n            \"description\": \"Billed every month.\"\n        },\n        \"payments\": [\n            {\n                \"id\": 1,\n                \"method\": \"cash\",\n                \"status\": \"pending\",\n                \"amount\": \"99.00\",\n                \"currency\": \"EGP\",\n                \"reference\": \"QAR-4GDUTBUCKBZWQQYDNXHZ\",\n                \"paid_at\": null,\n                \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n            }\n        ]\n    }\n]"
+                        }
+                    ]
+                },
+                {
+                    "name": "Show subscription",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/subscriptions/{{subscriptionId}}"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/subscriptions/{{subscriptionId}}"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 1,\n    \"status\": \"pending\",\n    \"is_active\": false,\n    \"period\": \"monthly\",\n    \"duration_months\": 1,\n    \"price\": \"99.00\",\n    \"currency\": \"EGP\",\n    \"starts_at\": null,\n    \"ends_at\": null,\n    \"cancelled_at\": null,\n    \"created_at\": \"2026-08-29T15:20:23.000000Z\",\n    \"package\": {\n        \"id\": 1,\n        \"name\": \"Monthly\",\n        \"slug\": \"monthly\",\n        \"period\": \"monthly\",\n        \"duration_months\": 1,\n        \"price\": \"99.00\",\n        \"currency\": \"EGP\",\n        \"description\": \"Billed every month.\"\n    },\n    \"payments\": [\n        {\n            \"id\": 1,\n            \"method\": \"cash\",\n            \"status\": \"pending\",\n            \"amount\": \"99.00\",\n            \"currency\": \"EGP\",\n            \"reference\": \"QAR-4GDUTBUCKBZWQQYDNXHZ\",\n            \"paid_at\": null,\n            \"created_at\": \"2026-08-29T15:20:23.000000Z\"\n        }\n    ]\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Merchant menu",
+            "item": [
+                {
+                    "name": "Public menu",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/merchants/{{merchantId}}/menu",
+                        "description": "Published menu and available items for a merchant shop."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/merchants/{{merchantId}}/menu",
+                                "description": "Published menu and available items for a merchant shop."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 6,\n    \"title\": \"Spark Wash — Services\",\n    \"description\": \"Interior and exterior car care.\",\n    \"is_published\": true,\n    \"merchant\": {\n        \"id\": 7,\n        \"shop_name\": \"Spark Wash Maadi\",\n        \"activity_type\": \"car_wash\"\n    },\n    \"items\": [\n        {\n            \"id\": 11,\n            \"name\": \"Full exterior wash\",\n            \"description\": \"Foam wash, rinse, hand dry.\",\n            \"price\": \"175.00\",\n            \"currency\": \"EGP\",\n            \"image_url\": \"https://qar-4uh5.onrender.com/storage/menu-items/5sx58drgG2gNNnwCFCPPPJWP78hBcWWqiAgOjJs3.jpg\",\n            \"category\": \"Wash\",\n            \"duration_minutes\": 30,\n            \"is_available\": true,\n            \"sort_order\": 1\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get my menu",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/menu",
+                        "description": "Merchant mode. Returns the shop menu including unavailable items."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/menu",
+                                "description": "Merchant mode. Returns the shop menu including unavailable items."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 6,\n    \"title\": null,\n    \"description\": null,\n    \"is_published\": true,\n    \"merchant\": {\n        \"id\": 7,\n        \"shop_name\": \"Spark Wash Maadi\",\n        \"activity_type\": \"car_wash\"\n    },\n    \"items\": []\n}"
+                        },
+                        {
+                            "name": "First call, menu created (201)",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/menu",
+                                "description": "Merchant mode. Returns the shop menu including unavailable items."
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 6,\n    \"title\": null,\n    \"description\": null,\n    \"is_published\": true,\n    \"merchant\": {\n        \"id\": 7,\n        \"shop_name\": \"Spark Wash Maadi\",\n        \"activity_type\": \"car_wash\"\n    },\n    \"items\": []\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update my menu",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Spark Wash menu\",\n  \"description\": \"Wash packages\",\n  \"is_published\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/api/menu"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"title\": \"Spark Wash menu\",\n  \"description\": \"Wash packages\",\n  \"is_published\": true\n}"
+                                },
+                                "url": "{{baseUrl}}/api/menu"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 6,\n    \"title\": \"Spark Wash — Services\",\n    \"description\": \"Interior and exterior car care.\",\n    \"is_published\": true,\n    \"merchant\": {\n        \"id\": 7,\n        \"shop_name\": \"Spark Wash Maadi\",\n        \"activity_type\": \"car_wash\"\n    },\n    \"items\": []\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create menu item",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id) pm.collectionVariables.set('menuItemId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Exterior wash",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Body wash and rinse",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "price",
+                                    "value": "80",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "Exterior",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "duration_minutes",
+                                    "value": "20",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "is_available",
+                                    "value": "1",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": "{{baseUrl}}/api/menu/items"
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "name",
+                                            "value": "Exterior wash",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "description",
+                                            "value": "Body wash and rinse",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "price",
+                                            "value": "80",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "category",
+                                            "value": "Exterior",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "duration_minutes",
+                                            "value": "20",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "is_available",
+                                            "value": "1",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "url": "{{baseUrl}}/api/menu/items"
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 11,\n    \"name\": \"Full exterior wash\",\n    \"description\": \"Foam wash, rinse, hand dry.\",\n    \"price\": \"150.00\",\n    \"currency\": \"EGP\",\n    \"image_url\": \"https://qar-4uh5.onrender.com/storage/menu-items/5sx58drgG2gNNnwCFCPPPJWP78hBcWWqiAgOjJs3.jpg\",\n    \"category\": \"Wash\",\n    \"duration_minutes\": 30,\n    \"is_available\": true,\n    \"sort_order\": 1\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update menu item",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "_method",
+                                    "value": "PUT",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "price",
+                                    "value": "90",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "is_available",
+                                    "value": "1",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": "{{baseUrl}}/api/menu/items/{{menuItemId}}"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "_method",
+                                            "value": "PUT",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "price",
+                                            "value": "90",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "is_available",
+                                            "value": "1",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "url": "{{baseUrl}}/api/menu/items/{{menuItemId}}"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"id\": 11,\n    \"name\": \"Full exterior wash\",\n    \"description\": \"Foam wash, rinse, hand dry.\",\n    \"price\": \"175.00\",\n    \"currency\": \"EGP\",\n    \"image_url\": \"https://qar-4uh5.onrender.com/storage/menu-items/5sx58drgG2gNNnwCFCPPPJWP78hBcWWqiAgOjJs3.jpg\",\n    \"category\": \"Wash\",\n    \"duration_minutes\": 30,\n    \"is_available\": true,\n    \"sort_order\": 1\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete menu item",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/api/menu/items/{{menuItemId}}"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": "{{baseUrl}}/api/menu/items/{{menuItemId}}"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"Menu item deleted.\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Payments (webhook)",
+            "item": [
+                {
+                    "name": "Paymob webhook",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"obj\": {\n    \"id\": 123456789,\n    \"merchant_order_id\": \"PAY-EXAMPLE\",\n    \"success\": true,\n    \"amount_cents\": 10000,\n    \"currency\": \"EGP\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/payments/paymob/webhook?hmac=REPLACE_WITH_VALID_HMAC",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "payments",
+                                "paymob",
+                                "webhook"
+                            ],
+                            "query": [
+                                {
+                                    "key": "hmac",
+                                    "value": "REPLACE_WITH_VALID_HMAC"
+                                }
+                            ]
+                        },
+                        "description": "Server-to-server Paymob callback. Requires valid HMAC query param."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "auth": {
+                                    "type": "noauth"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"obj\": {\n    \"id\": 123456789,\n    \"merchant_order_id\": \"PAY-EXAMPLE\",\n    \"success\": true,\n    \"amount_cents\": 10000,\n    \"currency\": \"EGP\"\n  }\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/payments/paymob/webhook?hmac=REPLACE_WITH_VALID_HMAC",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "payments",
+                                        "paymob",
+                                        "webhook"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "hmac",
+                                            "value": "REPLACE_WITH_VALID_HMAC"
+                                        }
+                                    ]
+                                },
+                                "description": "Server-to-server Paymob callback. Requires valid HMAC query param."
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n    \"message\": \"ok\"\n}"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -43,7 +43,8 @@ interface AuthContextType extends AuthState {
     email: string;
     password: string;
     password_confirmation: string;
-    phone?: string;
+    /** Required by the API, E.164 format. */
+    phone: string;
   }) => Promise<void>;
   /** Password login */
   loginWithPassword: (email: string, password: string) => Promise<void>;
@@ -136,13 +137,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string;
     password: string;
     password_confirmation: string;
-    phone?: string;
+    phone: string;
   }) {
     const res = await passwordRegister(params);
     await persistSession({
       isAuthenticated: true,
       userId: res.user.id,
-      phone: params.phone ?? null,
+      phone: res.user.phone ?? params.phone,
       username: res.user.name,
       email: res.user.email ?? params.email,
       authMethod: 'password',
