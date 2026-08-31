@@ -26,7 +26,7 @@ export const ar: Translations = {
   language: {
     english: 'English',
     arabic: 'العربية',
-    applyNotice: 'يُطبَّق في كل أنحاء التطبيق فورًا.',
+    applyNotice: 'سيتم إعادة تشغيل Qar لتطبيق اللغة الجديدة.',
   },
 
   legal: {
@@ -259,6 +259,24 @@ export const ar: Translations = {
     shopUnavailable: 'هذا المتجر لم يعد متاحًا.',
   },
 
+  packages: {
+    title: 'اختر باقتك',
+    subtitle: 'استفد من كل ما يقدمه Qar لسيارتك. يمكنك تغيير الباقة لاحقًا.',
+    bestValue: 'الأفضل قيمة',
+    perMonth: 'شهريًا',
+    perSemiAnnual: 'كل ٦ أشهر',
+    perAnnual: 'سنويًا',
+    paymentMethod: 'كيف تفضّل الدفع؟',
+    cash: 'نقدًا',
+    cashHint: 'يؤكده فريقنا',
+    online: 'أونلاين',
+    onlineHint: 'بطاقة أو محفظة',
+    continue: 'متابعة',
+    skip: 'تخطي الآن',
+    loadFailed: 'تعذّر تحميل الباقات',
+    subscribeFailed: 'تعذّر بدء الاشتراك',
+    done: 'تم بنجاح',
+  },
   months: {
     '1': 'يناير', '2': 'فبراير', '3': 'مارس', '4': 'أبريل',
     '5': 'مايو', '6': 'يونيو', '7': 'يوليو', '8': 'أغسطس',

@@ -49,7 +49,9 @@ interface AuthContextType extends AuthState {
   /** Password login */
   loginWithPassword: (email: string, password: string) => Promise<void>;
   /** Google login with a verified Google ID token */
-  loginWithGoogle: (idToken: string) => Promise<void>;
+  /** Resolves `true` when Google created the account, so the caller can
+   *  send a brand-new user through the plan picker instead of straight to Home. */
+  loginWithGoogle: (idToken: string) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -164,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }
 
-  async function loginWithGoogle(idToken: string) {
+  async function loginWithGoogle(idToken: string): Promise<boolean> {
     const res = await googleLogin(idToken);
     await persistSession({
       isAuthenticated: true,
@@ -175,6 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authMethod: 'google',
       token: res.token,
     });
+    return res.is_new_user === true;
   }
 
   async function logout() {

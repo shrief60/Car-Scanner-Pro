@@ -33,7 +33,7 @@ export const en = {
   language: {
     english: 'English',
     arabic: 'العربية',
-    applyNotice: 'Applies everywhere in the app, straight away.',
+    applyNotice: 'Qar will restart to apply the new language.',
   },
 
   legal: {
@@ -271,6 +271,24 @@ export const en = {
     shopUnavailable: 'This shop is no longer available.',
   },
 
+  packages: {
+    title: 'Choose your plan',
+    subtitle: 'Unlock everything Qar can do for your car. You can change this later.',
+    bestValue: 'Best value',
+    perMonth: 'per month',
+    perSemiAnnual: 'every 6 months',
+    perAnnual: 'per year',
+    paymentMethod: 'How would you like to pay?',
+    cash: 'Cash',
+    cashHint: 'Confirmed by our team',
+    online: 'Online',
+    onlineHint: 'Card or wallet',
+    continue: 'Continue',
+    skip: 'Skip for now',
+    loadFailed: 'Could not load the plans',
+    subscribeFailed: 'Could not start your subscription',
+    done: 'You are all set',
+  },
   months: {
     '1': 'January', '2': 'February', '3': 'March', '4': 'April',
     '5': 'May', '6': 'June', '7': 'July', '8': 'August',

@@ -1,4 +1,4 @@
-import { TextStyle, ViewStyle } from 'react-native';
+import { Platform, TextStyle, ViewStyle } from 'react-native';
 import type { Locale } from '@/i18n';
 
 /**
@@ -70,6 +70,18 @@ export function alignEnd(): Pick<TextStyle, 'textAlign'> {
  */
 export function alignInput(): Pick<TextStyle, 'textAlign'> {
   return { textAlign: IS_RTL ? 'right' : 'left' };
+}
+
+/**
+ * Android's `slide_from_right` is a literal `fromXDelta="100%"` translate and is **not**
+ * mirrored by layout direction, so an RTL screen would push in from the wrong side. iOS
+ * mirrors its own native push, so `default` is correct there.
+ *
+ * A function, not a constant: it must be read at render, after the locale is resolved.
+ */
+export function stackAnimation() {
+  if (Platform.OS !== 'android') return 'default' as const;
+  return IS_RTL ? ('slide_from_left' as const) : ('slide_from_right' as const);
 }
 
 /**

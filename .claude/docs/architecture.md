@@ -36,7 +36,7 @@ artifacts/mobile/
     _layout.tsx         provider stack, font loading, splash gate
     index.tsx           redirects on auth state
     (auth)/             welcome, login, register, phone, otp
-    (main)/             home, add-car, qr-display, scanner, search-car, service
+    (main)/             home, add-car, qr-display, scanner, search-car, service, packages
     scan/[id].tsx       the stranger-facing alert screen
     (tabs)/             legacy stubs, both just <Redirect> to /(main)/home
   services/             api.ts, auth.ts, cars.ts, scan.ts
@@ -64,6 +64,7 @@ Provider order in `app/_layout.tsx`:
 | `/(main)/scanner` | camera barcode scan | `scanQrCode` |
 | `/(main)/search-car` | **inert** — the button has no `onPress` | — |
 | `/(main)/service` | static copy for 6 services, no handlers | — |
+| `/(main)/packages` | plan picker shown once, right after signup; Skip goes to Home | `listPackages`, `subscribe` |
 | `/scan/[id]` | stranger picks an alert | `sendAlert` |
 
 ### Auth and token handling

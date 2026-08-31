@@ -3,7 +3,6 @@ import { DevSettings, I18nManager, Platform } from 'react-native';
 import { reloadAppAsync } from 'expo';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { isRTL as isRTLDirection, setAppDirection } from '@/lib/direction';
-import { bindFontAliases } from '@/lib/fonts';
 import {
   getActiveLocale,
   isArabic,
@@ -57,55 +56,55 @@ export const IS_EXPO_GO =
   Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 export function LocaleProvider({
-  locale,
-  onLocaleChange,
+  initialLocale,
   children,
 }: {
-  locale: Locale;
-  onLocaleChange: (next: Locale) => void;
+  initialLocale: Locale;
   children: React.ReactNode;
 }) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
   const [switching, setSwitching] = useState(false);
 
   /**
-   * Switches language in place: no restart, so no loading screen of any kind.
+   * Switching language restarts the app.
    *
-   * Order matters. i18n, direction and the font aliases are all updated *before* the
-   * state change that remounts the tree, so the very first frame of the new language is
-   * already correct — there is no window where new copy renders in the old direction.
+   * An in-place swap was built and measured, and it does not work: `lib/fonts.ts` can
+   * re-point the aliases at runtime, but React Native caches text measurements keyed on
+   * the *attributed string* — and `fontFamily` stays `'AppBold'` either way. Any string
+   * that is byte-identical in both languages therefore reuses a width measured with the
+   * other family and renders clipped: the `Qar` wordmark came out as `Qa`, the signed-in
+   * name `QarTester` as `QarTeste`. Translated copy was fine, which is what made it look
+   * like it worked. Backend data — plate numbers, merchant names, prices — is identical
+   * across locales too, so it would have been corrupted app-wide.
+   *
+   * A fresh JS context has no such cache, so the restart stays.
    */
   async function setLocale(next: Locale) {
     if (next === locale || switching) return;
     setSwitching(true);
 
-    try {
-      setActiveLocale(next);
-      setAppDirection(next);
-      // The one genuinely async step (~a bundled asset decode). The skeleton covers it.
-      await bindFontAliases(next);
-      await persistLocale(next);
+    setActiveLocale(next);
+    // Flip direction and copy immediately, so if the restart is slow the user is not
+    // looking at new copy in the old direction.
+    setAppDirection(next);
+    setLocaleState(next);
+    await persistLocale(next);
 
-      // Not needed for our own layout — direction comes from `lib/direction` — but it
-      // makes the *native* views (a TextInput's default alignment, Android's own
-      // widgets) mirror correctly from the next cold start onwards. No reload here.
-      const shouldBeRTL = isArabic(next);
-      if (Platform.OS !== 'web' && shouldBeRTL !== I18nManager.isRTL) {
-        I18nManager.allowRTL(shouldBeRTL);
-        I18nManager.forceRTL(shouldBeRTL);
-      }
-
-      // Remounts `LocalisedApp` under a new key, so every Text is rebuilt against the
-      // re-pointed aliases.
-      onLocaleChange(next);
-    } catch (e) {
-      // Re-pointing the aliases is the only step that can realistically fail. Fall back
-      // to the old behaviour rather than leaving the user in a half-switched app.
-      console.warn('[locale] in-place switch failed; restarting instead', e);
-      await persistLocale(next);
-      await restartApp();
-    } finally {
-      setSwitching(false);
+    const shouldBeRTL = isArabic(next);
+    if (Platform.OS !== 'web' && shouldBeRTL !== I18nManager.isRTL) {
+      I18nManager.allowRTL(shouldBeRTL);
+      I18nManager.forceRTL(shouldBeRTL);
     }
+
+    // Let the skeleton paint before JS is torn down; without this the restart fires in
+    // the same tick the overlay mounts and the user goes straight to a blank frame.
+    await new Promise(resolve => setTimeout(resolve, 400));
+    await restartApp();
+
+    // `switching` deliberately stays true: `DevSettings.reload()` only *schedules* the
+    // reload, so clearing it here tore the skeleton down a beat early. This is the
+    // fallback for a restart that never takes.
+    setTimeout(() => setSwitching(false), 5000);
   }
 
   /**

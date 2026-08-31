@@ -41,8 +41,13 @@ import type { Locale } from '@/i18n';
  * native files carry a "do NOT change the function signature as it'll break consumers"
  * note, because RN vector icons calls it too.
  *
- * If any of this fails, `setLocale` falls back to restarting the app: the old behaviour,
- * not a broken one.
+ * **This is used at boot only.** Re-pointing live was built and measured, and it does not
+ * work: React Native caches text measurements keyed on the attributed string, and
+ * `fontFamily` stays `'AppBold'` through the swap — so any string that is byte-identical
+ * in both languages reuses a width measured with the *other* family and renders clipped
+ * (`Qar` came out as `Qa`). Translated copy was unaffected, which is what made it look
+ * like it worked. A language change therefore still restarts the app; see `setLocale` in
+ * `context/LocaleContext.tsx`.
  */
 
 type FontLoaderModule = { loadAsync(fontFamilyName: string, localUri: string): Promise<void> };
@@ -67,7 +72,7 @@ const FAMILIES: Record<Locale, Record<string, number>> = {
   },
 };
 
-/** Which family the aliases currently point at, so a no-op switch stays a no-op. */
+/** Which family the aliases currently point at, so a repeat bind stays a no-op. */
 let boundLocale: Locale | null = null;
 
 export function boundFontLocale() {

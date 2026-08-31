@@ -162,6 +162,8 @@ Audited against `artifacts/mobile/services/`. Keep this current when you wire so
 | `POST /api/cars` | `createCar` | `(main)/add-car.tsx` |
 | `GET /api/scan/{qrCode}` | `scanQrCode` | `(main)/scanner.tsx` |
 | `POST /api/scan/{qrCode}/alerts` | `sendAlert` | `scan/[id].tsx` |
+| `GET /api/packages` | `listPackages` | `(main)/packages.tsx` |
+| `POST /api/subscriptions` | `subscribe` | `(main)/packages.tsx` |
 
 **Built but unreachable** — code exists, no user can get to it:
 

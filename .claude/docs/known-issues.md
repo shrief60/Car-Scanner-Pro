@@ -119,46 +119,48 @@ an Arabic paragraph the leading `+` moves to the far end and it renders `2010199
 on both. Only for genuinely Latin/numeric runs — an Egyptian plate like `ا ج ب 234` has
 strong RTL letters and must keep its natural order.
 
-## 9. Changing language no longer restarts the app — and why that took a rewrite
+## 9. Changing language restarts the app, and the white screen is Expo Go's
 
-The white screen users saw mid-switch was **Expo Go's own project loader** ("Loading from
-127.0.0.1:8082…", app icon on white). Nothing in JS runs while it is up, so no overlay
-could ever cover it. The only real fix was to stop restarting the app at all.
+The white screen mid-switch is **Expo Go's own project loader** ("Loading from
+127.0.0.1:8082…", app icon on white). No JS of ours runs while it is up, so no overlay can
+cover it. In a dev client or release build `restartApp()` takes `reloadAppAsync()` and the
+app comes back on its own dark splash instead.
 
-**What forced the restart:** every style says `fontFamily: FONT.bold` (= `'AppBold'`), and
-`expo-font`'s public `loadAsync` refuses to re-point a name that is already loaded —
-`Font.js` → `loadFontInNamespaceAsync` returns early on `isLoaded(name)`.
+**Why the restart is needed.** Every style says `fontFamily: FONT.bold` (= `'AppBold'`).
+`expo-font`'s public `loadAsync` refuses to re-point a loaded name (`Font.js` →
+`loadFontInNamespaceAsync` returns early on `isLoaded`).
 
-**Why that guard is skippable:** it is a JS-side optimisation only. Both native
-implementations are written to overwrite:
+**That guard *is* skippable — and it still does not help.** `lib/fonts.ts` reaches the
+native `ExpoFontLoader.loadAsync` directly and both platforms honour the overwrite
+(Android's `ReactFontManager.setTypeface` replaces the entry; iOS unregisters first, with
+the comment *"or someone wants to override a font"*, and its `.notRegistered → true`
+branch makes swapping to a different file work). Verified on iOS by binding the opposite
+family last: English rendered in IBM Plex Sans instead of Inter.
 
-- Android, `FontLoaderModule.kt`: `ReactFontManager.setTypeface(name, NORMAL, tf)` replaces
-  whatever the name pointed at.
-- iOS, `FontLoaderModule.swift`: unregisters an already-registered alias first, with the
-  comment *"or someone wants to override a font"*.
+**It was reverted anyway.** React Native caches text measurements keyed on the attributed
+string, and `fontFamily` stays `'AppBold'` through the swap. Any string that is
+byte-identical in both languages therefore reuses a width measured with the *other* family
+and renders **clipped**: the `Qar` wordmark came out `Qa`, the signed-in name `QarTester`
+came out `QarTeste`. Translated copy was unaffected — which is exactly what made the
+approach look like it worked. Backend data (plate numbers, merchant names, plan names,
+prices) is identical across locales too, so it would have been corrupted app-wide.
 
-`lib/fonts.ts` therefore calls the native `ExpoFontLoader.loadAsync` directly (via the
-public `requireNativeModule` from `expo`, not `expo-font`'s private build path) and
-re-points all four aliases in place. `app/_layout.tsx` then remounts the navigator under
-`key={locale}` so every `Text` is rebuilt against the new typeface.
+A fresh JS context has no such cache. `lib/fonts.ts` is kept as the **boot-time** binder;
+its re-point ability is deliberately unused.
 
-Result: the switch is instant, there is no loading screen in any environment, and the
-user stays on the screen they were on. `restartApp()` survives as a fallback if the alias
-overwrite ever stops working.
+**The only way to remove the restart** is to stop needing two families — i.e. render both
+languages in IBM Plex Sans Arabic, whose Latin is IBM Plex Sans. That is a product
+decision about English typography, not a technical one.
 
-**Two traps this created, both real and both hit:**
+**Two traps found along the way, both still live:**
 
 1. **React Compiler caches anything with no reactive input.** The root view's direction
-   came from a bare `rootDirection()` call inside a memoised style array, so after a switch
-   the copy and fonts changed while the layout kept its original direction. It now derives
-   from the `locale` prop. Every other direction helper (`alignStart()`, `mirrorIcon()`, …)
-   is safe *only because* the `key={locale}` remount discards those caches — anything
-   rendered **above** that key must take direction from a prop, not from `lib/direction`.
-2. `I18nManager.forceRTL` is still called, but no longer triggers a reload. It exists only
-   so native views (a `TextInput`'s default alignment, Android's own widgets) mirror from
-   the next cold start. It also **does not survive an Expo Go cold start** — measured:
-   `nativeIsRTL` came back `false` on a fresh launch after a switch that set it. That is why
-   layout direction is driven by the root view's Yoga `direction` instead.
+   came from a bare `rootDirection()` inside a memoised style array and never invalidated.
+   It now derives from the `locale` prop. Anything rendered above a locale-keyed remount
+   must take direction from a prop, not from `lib/direction`.
+2. `I18nManager.forceRTL` **does not survive an Expo Go cold start** — measured:
+   `nativeIsRTL` came back `false` on a fresh launch after a switch that set it. That is
+   why layout direction is driven by the root view's Yoga `direction`.
 
 ## 10. Form rows are a deliberate LTR island
 

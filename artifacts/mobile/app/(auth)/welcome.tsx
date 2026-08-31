@@ -87,8 +87,9 @@ export default function WelcomeScreen() {
       setGoogleLoading(true);
       setGoogleError('');
       try {
-        await loginWithGoogle(idToken);
-        router.replace('/(main)/home');
+        const isNewAccount = await loginWithGoogle(idToken);
+        // A brand-new account gets the plan picker first; a returning user does not.
+        router.replace(isNewAccount ? '/(main)/packages' : '/(main)/home');
       } catch (e: unknown) {
         const error = e as Error & { status?: number; code?: string };
         if (error.code === 'requires_link' || error.status === 409) {

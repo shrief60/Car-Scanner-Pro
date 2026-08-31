@@ -69,7 +69,8 @@ export default function RegisterScreen() {
         password: values.password,
         password_confirmation: values.confirm,
       });
-      router.replace('/(main)/home');
+      // New account -> pick a plan before Home. The screen's own Skip goes to Home.
+      router.replace('/(main)/packages');
     } catch (err: unknown) {
       applyServerErrors<RegisterValues>(err, setError, FIELDS);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
