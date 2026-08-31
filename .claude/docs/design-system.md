@@ -332,6 +332,67 @@ logoutBtn: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center
 logoutText:{ fontSize: 16, fontFamily: 'Inter_600SemiBold', color: '#ef4444' },
 ```
 
+### List screen — FlatList
+
+The app's list pattern. `components/ServiceMenuScreen.tsx` is the worked example.
+
+```tsx
+<FlatList
+  data={rows}
+  keyExtractor={row => `${row.merchant.id}:${row.id}`}   // composite where ids repeat
+  renderItem={({ item }) => <Card item={item} onPress={…} />}
+  getItemLayout={(_, i) => ({ length: H + GAP, offset: (H + GAP) * i, index: i })}
+  ItemSeparatorComponent={() => <View style={{ height: GAP }} />}
+  initialNumToRender={6}
+  removeClippedSubviews={false}
+  refreshControl={<RefreshControl … />}
+  ListEmptyComponent={isPending ? <Skeletons /> : <EmptyState />}
+/>
+```
+
+- **Cards must be fixed height** — that is what makes `getItemLayout` possible, and it
+  is the single biggest scroll win. Clamp every text node with `numberOfLines`.
+- **`RefreshControl` needs explicit colours.** The default spinner is dark-on-dark and
+  invisible on `#082926`: `tintColor="#7fb5ae"` (iOS), `colors={['#7fb5ae']}` and
+  `progressBackgroundColor="#0e3b33"` (Android).
+- **`removeClippedSubviews={false}`** — it defaults to `true` on Android and causes
+  blank cells; at these list sizes it buys nothing.
+- **Never nest a FlatList in a ScrollView** to make a header scroll — that silently
+  disables virtualisation. Keep headers and tab bars *outside* the list so they also
+  don't remount on tab switch.
+- **No `React.memo` / `useCallback` / `useMemo`.** `app.json` enables
+  `experiments.reactCompiler`, so hand-memoisation is redundant here.
+- Guard `onEndReached` — it fires on mount with empty data:
+  `if (hasNextPage && !isFetchingNextPage) fetchNextPage()`.
+
+### Remote images
+
+`components/RemoteImage.tsx`. Data is unreliable — `image_url` can be null and real
+storage paths 404 — so the icon placeholder renders *underneath* the image rather than
+in an `onError` branch, and a slow or silently-failed load degrades to it.
+
+Inside a virtualised list pass **`recyclingKey`**, or a recycled row briefly shows the
+previous item's photo. Also set `cachePolicy="memory-disk"` and `transition={200}`.
+
+### Arabic / RTL content
+
+The legal documents are Arabic inside an otherwise English, left-to-right app.
+**Do not call `I18nManager.forceRTL`** — it restarts the app and mirrors every screen.
+Lay out the Arabic blocks individually instead (`app/legal/[doc].tsx`):
+
+```tsx
+const rtl = { textAlign: 'right', writingDirection: 'rtl' } as const;
+// bullets: the marker belongs on the right
+bulletRow: { flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10 },
+```
+
+Arabic needs more vertical room than Latin — use `lineHeight` ~1.8× the font size
+(15pt text → 27pt line height), or diacritics and descenders collide.
+
+**Short Arabic labels inside an LTR row stay left-aligned.** Forcing `textAlign:'right'`
+on the label of a list row splits it — Arabic hard right, English sub-label hard left,
+gap in the middle. The glyphs still shape and read RTL within themselves.
+
 ### FAB
 
 ```tsx

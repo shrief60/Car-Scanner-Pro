@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { useCars, Car } from '@/context/CarsContext';
 import { getMe, UserProfile } from '@/services/auth';
+import { LegalSlug } from '@/constants/legal';
 
 /** "Shehab Ahmed" -> "SA"; falls back to the first glyph of anything non-empty. */
 function initialsOf(name?: string | null) {
@@ -60,6 +61,37 @@ function InfoRowSkeleton() {
         <Skeleton width={150} height={15} style={{ marginTop: 6 }} />
       </View>
     </View>
+  );
+}
+
+/** A tappable policy row. Arabic title with an English sub-label, matching the docs. */
+function LegalRow({
+  icon,
+  label,
+  sublabel,
+  doc,
+}: {
+  icon: string;
+  label: string;
+  sublabel: string;
+  doc: LegalSlug;
+}) {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.infoRow, pressed && { opacity: 0.75 }]}
+      onPress={() => router.push({ pathname: '/legal/[doc]', params: { doc } })}
+      accessibilityRole="button"
+      accessibilityLabel={sublabel}
+    >
+      <View style={styles.infoIcon}>
+        <Ionicons name={icon as any} size={18} color="#7fb5ae" />
+      </View>
+      <View style={styles.infoText}>
+        <Text style={styles.legalLabel}>{label}</Text>
+        <Text style={styles.infoLabel}>{sublabel}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color="#7fb5ae" />
+    </Pressable>
   );
 }
 
@@ -273,6 +305,31 @@ export default function ProfileScreen() {
           </View>
         )}
 
+        {/* ── Legal ────────────────────────────────────────────────────── */}
+        <Text style={styles.sectionTitle}>Legal</Text>
+        <View style={styles.infoCard}>
+          <LegalRow
+            icon="shield-checkmark-outline"
+            label="سياسة الخصوصية"
+            sublabel="Privacy Policy"
+            doc="privacy"
+          />
+          <View style={styles.divider} />
+          <LegalRow
+            icon="card-outline"
+            label="سياسة الاسترداد"
+            sublabel="Refund Policy"
+            doc="refund"
+          />
+          <View style={styles.divider} />
+          <LegalRow
+            icon="document-text-outline"
+            label="شروط الاستخدام"
+            sublabel="Terms of Use"
+            doc="terms"
+          />
+        </View>
+
         {/* ── Sign out ──────────────────────────────────────────────────── */}
         <Pressable
           style={({ pressed }) => [styles.logoutBtn, pressed && styles.logoutPressed]}
@@ -326,6 +383,10 @@ const styles = StyleSheet.create({
   },
   infoText: { flex: 1 },
   infoLabel: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  // Left-aligned like every other row on this screen. The Arabic still shapes and
+  // reads right-to-left within itself; forcing textAlign:'right' here only split the
+  // row — Arabic hard right, English sub-label hard left, with a gap between them.
+  legalLabel: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
   infoValue: { fontSize: 15, fontFamily: 'Inter_500Medium', color: '#FFFFFF', marginTop: 2 },
   divider: { height: 1, backgroundColor: '#1a5048', marginLeft: 50 },
 

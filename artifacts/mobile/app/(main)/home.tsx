@@ -72,23 +72,21 @@ export default function HomeScreen() {
               style={({ pressed }) => [styles.searchOption, pressed && styles.optionPressed]}
               onPress={() => router.push('/(main)/scanner')}
             >
-              <View style={styles.searchIcon}><Ionicons name="scan-outline" size={24} color="#082926" /></View>
+              <View style={styles.searchIcon}><Ionicons name="scan-outline" size={21} color="#082926" /></View>
               <View style={styles.searchText}>
-                <Text style={styles.searchLabel}>Scan QR</Text>
-                <Text style={styles.searchHint}>Use your camera</Text>
+                <Text style={styles.searchLabel} numberOfLines={1} maxFontSizeMultiplier={1.2}>Scan QR</Text>
+                <Text style={styles.searchHint} numberOfLines={1} maxFontSizeMultiplier={1.2}>Use your camera</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#082926" />
             </Pressable>
             <Pressable
               style={({ pressed }) => [styles.searchOption, pressed && styles.optionPressed]}
               onPress={() => router.push('/(main)/search-car')}
             >
-              <View style={styles.searchIcon}><Ionicons name="search-outline" size={24} color="#082926" /></View>
+              <View style={styles.searchIcon}><Ionicons name="search-outline" size={21} color="#082926" /></View>
               <View style={styles.searchText}>
-                <Text style={styles.searchLabel}>Car Number</Text>
-                <Text style={styles.searchHint}>Search by plate</Text>
+                <Text style={styles.searchLabel} numberOfLines={1} maxFontSizeMultiplier={1.2}>Car Number</Text>
+                <Text style={styles.searchHint} numberOfLines={1} maxFontSizeMultiplier={1.2}>Search by plate</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#082926" />
             </Pressable>
           </View>
         </View>
@@ -138,8 +136,12 @@ const styles = StyleSheet.create({
   sectionCaption: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
   searchSubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#7fb5ae', marginBottom: 8 },
   searchRow: { flexDirection: 'row', gap: 8 },
-  searchOption: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 13, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  searchIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#e5f0ed', justifyContent: 'center', alignItems: 'center' },
+  // No chevron: at 2-up these chips are too narrow for one. On anything below an
+  // iPhone Pro Max the arrow stole the ~23pt that 'Use your camera' needs, so the
+  // hint wrapped to two lines and the two chips ended up different heights.
+  // minHeight keeps them identical even if a label ever does have to ellipsize.
+  searchOption: { flex: 1, minHeight: 56, backgroundColor: '#FFFFFF', borderRadius: 13, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  searchIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#e5f0ed', justifyContent: 'center', alignItems: 'center' },
   searchText: { flex: 1 },
   searchLabel: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#082926' },
   searchHint: { fontSize: 10, fontFamily: 'Inter_400Regular', color: '#4a8a82', marginTop: 2 },

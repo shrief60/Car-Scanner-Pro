@@ -47,7 +47,7 @@ export default function RegisterScreen() {
     resolver: yupResolver(registerSchema),
     // onTouched, not onChange — otherwise the phone errors while you are still typing it.
     mode: 'onTouched',
-    defaultValues: { name: '', email: '', phone: '', password: '', confirm: '' },
+    defaultValues: { name: '', email: '', phone: '', password: '', confirm: '', acceptedTerms: false },
   });
 
   const password = watch('password');
@@ -207,6 +207,40 @@ export default function RegisterScreen() {
               )}
             />
 
+            <Controller
+              control={control}
+              name="acceptedTerms"
+              render={({ field, fieldState }) => (
+                <View>
+                  <Pressable
+                    style={styles.termsRow}
+                    onPress={() => field.onChange(!field.value)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: !!field.value }}
+                    hitSlop={6}
+                  >
+                    <View style={[styles.checkbox, field.value && styles.checkboxOn]}>
+                      {!!field.value && <Ionicons name="checkmark" size={15} color="#082926" />}
+                    </View>
+                    <Text style={styles.termsText}>
+                      I agree to the{' '}
+                      <Text
+                        style={styles.termsLink}
+                        onPress={() =>
+                          router.push({ pathname: '/legal/[doc]', params: { doc: 'terms' } })
+                        }
+                      >
+                        Terms of Use
+                      </Text>
+                    </Text>
+                  </Pressable>
+                  {fieldState.error ? (
+                    <Text style={styles.termsError}>{fieldState.error.message}</Text>
+                  ) : null}
+                </View>
+              )}
+            />
+
             {errors.root ? (
               <View style={styles.errorBox}>
                 <Ionicons name="alert-circle" size={16} color="#ef4444" />
@@ -261,6 +295,17 @@ const styles = StyleSheet.create({
   strengthBar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: '#124038', overflow: 'hidden' },
   strengthFill: { height: '100%', borderRadius: 2 },
   strengthLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+  termsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
+  checkbox: {
+    width: 22, height: 22, borderRadius: 7,
+    borderWidth: 1.5, borderColor: '#1a5048',
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  checkboxOn: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
+  termsText: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', color: '#7fb5ae', lineHeight: 19 },
+  termsLink: { fontFamily: 'Inter_600SemiBold', color: '#FFFFFF', textDecorationLine: 'underline' },
+  termsError: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#ef4444', marginTop: 6, marginLeft: 32 },
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 12,

@@ -60,6 +60,12 @@ export const registerSchema = yup.object({
     .string()
     .required('Confirm your password')
     .oneOf([yup.ref('password')], 'Passwords do not match'),
+  // Consent is recorded client-side only — the API has no field for it. See
+  // .claude/docs/known-issues.md if that ever needs to be persisted.
+  acceptedTerms: yup
+    .boolean()
+    .required()
+    .oneOf([true], 'Please accept the Terms of Use to continue'),
 });
 
 export type RegisterValues = yup.InferType<typeof registerSchema>;
