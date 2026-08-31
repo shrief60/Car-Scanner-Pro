@@ -10,8 +10,13 @@ import { Skeleton } from '@/components/Skeleton';
 import { useMerchantMenu } from '@/hooks/useMerchants';
 import { humanizeActivity } from '@/lib/format';
 import type { MenuItem } from '@/types/merchants';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { alignStart } from '@/lib/direction';
+import { useLocale } from '@/context/LocaleContext';
 
 export default function MerchantMenuScreen() {
+  const { t } = useLocale();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ merchantId: string }>();
   // Params arrive as strings; the query key is numeric. A string here would miss the
@@ -35,7 +40,7 @@ export default function MerchantMenuScreen() {
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name={mirrorIcon('arrow-back')} size={24} color="#FFFFFF" />
         </Pressable>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {data?.merchant.shop_name ?? 'Shop'}
@@ -56,10 +61,10 @@ export default function MerchantMenuScreen() {
           <>
             <RemoteImage uri={null} size={64} radius={16} icon="storefront-outline" />
             <View style={{ flex: 1 }}>
-              <Text style={styles.shopName} numberOfLines={1}>
+              <Text style={[styles.shopName, alignStart()]} numberOfLines={1}>
                 {data?.merchant.shop_name}
               </Text>
-              <Text style={styles.shopMeta} numberOfLines={1}>
+              <Text style={[styles.shopMeta, alignStart()]} numberOfLines={1}>
                 {data ? humanizeActivity(data.merchant.activity_type) : ''}
                 {items.length ? ` · ${items.length} services` : ''}
               </Text>
@@ -112,8 +117,8 @@ export default function MerchantMenuScreen() {
           ) : error ? null : (
             <EmptyState
               icon="construct-outline"
-              title="No services listed"
-              subtitle="This shop hasn't published its menu yet."
+              title={t('serviceBrowser.noMenuTitle')}
+              subtitle={t('serviceBrowser.noMenuSubtitle')}
             />
           )
         }
@@ -139,7 +144,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontFamily: FONT.bold, color: '#FFFFFF' },
   shopCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -153,6 +158,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1a5048',
   },
-  shopName: { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
-  shopMeta: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#7fb5ae', marginTop: 3 },
+  shopName: { fontSize: 18, fontFamily: FONT.bold, color: '#FFFFFF' },
+  shopMeta: { fontSize: 13, fontFamily: FONT.regular, color: '#7fb5ae', marginTop: 3 },
 });

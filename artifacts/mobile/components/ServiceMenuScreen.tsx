@@ -8,7 +8,13 @@ import { MenuItemCard, MenuItemCardSkeleton, LIST_GAP, MENU_ITEM_HEIGHT } from '
 import { MerchantCard, MerchantCardSkeleton, MERCHANT_ITEM_HEIGHT } from '@/components/MerchantCard';
 import { SegmentedTabs } from '@/components/SegmentedTabs';
 import { useMenuItemsFeed, useMerchants } from '@/hooks/useMerchants';
+import { useLocale } from '@/context/LocaleContext';
+import { EMPTY_MENU_KEY } from '@/constants/services';
+import type { TranslationKey } from '@/i18n';
 import type { ActivityType, Merchant, MenuItemWithMerchant } from '@/types/merchants';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { alignStart } from '@/lib/direction';
 
 type Tab = 'menu' | 'merchants';
 
@@ -36,6 +42,7 @@ export function ServiceMenuScreen({
   label: string;
 }) {
   const insets = useSafeAreaInsets();
+  const { t } = useLocale();
   const [tab, setTab] = useState<Tab>('menu');
 
   const feed = useMenuItemsFeed(activity);
@@ -77,9 +84,9 @@ export function ServiceMenuScreen({
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name={mirrorIcon('arrow-back')} size={24} color="#FFFFFF" />
         </Pressable>
-        <Text style={styles.title}>{label}</Text>
+        <Text style={[styles.title, alignStart()]}>{label}</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -88,8 +95,8 @@ export function ServiceMenuScreen({
           value={tab}
           onChange={setTab}
           options={[
-            { value: 'menu', label: 'Menu' },
-            { value: 'merchants', label: 'Merchants' },
+            { value: 'menu', label: t('serviceBrowser.menu') },
+            { value: 'merchants', label: t('serviceBrowser.merchants') },
           ]}
         />
       </View>
@@ -139,8 +146,8 @@ export function ServiceMenuScreen({
             ) : feed.error ? null : (
               <EmptyState
                 icon="construct-outline"
-                title="No services yet"
-                subtitle={`No ${label.toLowerCase()} shops have published a menu in your area.`}
+                title={t('serviceBrowser.noServicesTitle')}
+                subtitle={t((EMPTY_MENU_KEY[activity] ?? 'serviceBrowser.noServicesTitle') as TranslationKey)}
               />
             )
           }
@@ -190,8 +197,8 @@ export function ServiceMenuScreen({
             ) : merchants.error ? null : (
               <EmptyState
                 icon="storefront-outline"
-                title="No shops yet"
-                subtitle="We're adding partners in your area. Check back soon."
+                title={t('serviceBrowser.noShopsTitle')}
+                subtitle={t('serviceBrowser.noShopsSubtitle')}
               />
             )
           }
@@ -218,6 +225,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  title: { fontSize: 20, fontFamily: FONT.bold, color: '#FFFFFF' },
   tabs: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 14 },
 });

@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { Feather } from '@expo/vector-icons';
 import { reloadAppAsync } from 'expo';
+import { alignStart } from '@/lib/direction';
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -115,7 +116,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                   { borderBottomColor: colors.border },
                 ]}
               >
-                <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+                <Text style={[styles.modalTitle, alignStart(), { color: colors.foreground }]}>
                   Error Details
                 </Text>
                 <Pressable
@@ -147,7 +148,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                 >
                   <Text
                     style={[
-                      styles.errorText,
+                      styles.errorText, alignStart(),
                       {
                         color: colors.foreground,
                         fontFamily: monoFont,
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
   },
   topButton: {
     position: 'absolute',
-    right: 16,
+    end: 16,
     width: 44,
     height: 44,
     borderRadius: 8,

@@ -4,6 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LEGAL_DOCS, LegalSlug } from '@/constants/legal';
+import { useLocale } from '@/context/LocaleContext';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { alignStart } from '@/lib/direction';
 
 /**
  * Renders any of the legal documents.
@@ -11,14 +15,19 @@ import { LEGAL_DOCS, LegalSlug } from '@/constants/legal';
  * Lives at the root (not under `(main)`) because Create Account links to the Terms
  * before the user is signed in, so both the auth and main stacks need to reach it.
  *
- * The bodies are Arabic, so text blocks are laid out right-to-left individually
- * (`writingDirection` + `textAlign` + a reversed bullet row). The app is NOT flipped
- * with `I18nManager.forceRTL` — that restarts the app and mirrors every other screen.
+ * Each document exists in both languages, so the body follows the UI locale — which means
+ * document language and app direction can no longer disagree. Alignment therefore comes
+ * from the shared `alignStart()`, and the per-document `rtl`/`ltr` pair carries only the
+ * paragraph's base writing direction. Row layouts need no help: the root view's Yoga
+ * `direction` already mirrors them.
  */
 export default function LegalScreen() {
   const insets = useSafeAreaInsets();
   const { doc } = useLocalSearchParams<{ doc: string }>();
+  const { locale, t } = useLocale();
   const legal = LEGAL_DOCS[doc as LegalSlug] ?? LEGAL_DOCS.terms;
+  // Arabic always renders RTL; English renders in the app's own direction.
+  const isArabicBody = locale === 'ar';
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 12) }]}>
@@ -27,9 +36,9 @@ export default function LegalScreen() {
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name={mirrorIcon('arrow-back')} size={24} color="#FFFFFF" />
         </Pressable>
-        <Text style={styles.headerTitle} numberOfLines={1}>{legal.title}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>{t(`legal.${legal.slug}` as never)}</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -40,13 +49,15 @@ export default function LegalScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.docTitle}>{legal.arabicTitle}</Text>
-        <Text style={styles.updated}>آخر تحديث: {legal.lastUpdated}</Text>
+        <Text style={[styles.docTitle, alignStart(), !isArabicBody && ltr]}>{legal.title[locale]}</Text>
+        <Text style={[styles.updated, alignStart(), !isArabicBody && ltr]}>
+          {t('legal.lastUpdated')}: {legal.lastUpdated[locale]}
+        </Text>
 
-        {legal.blocks.map((block, i) => {
+        {legal.body[locale].map((block, i) => {
           if (block.type === 'heading') {
             return (
-              <Text key={i} style={styles.heading}>
+              <Text key={i} style={[styles.heading, alignStart(), !isArabicBody && ltr]}>
                 {block.text}
               </Text>
             );
@@ -57,14 +68,14 @@ export default function LegalScreen() {
                 {block.items.map((item, j) => (
                   <View key={j} style={styles.bulletRow}>
                     <View style={styles.dot} />
-                    <Text style={styles.bulletText}>{item}</Text>
+                    <Text style={[styles.bulletText, alignStart(), !isArabicBody && ltr]}>{item}</Text>
                   </View>
                 ))}
               </View>
             );
           }
           return (
-            <Text key={i} style={styles.paragraph}>
+            <Text key={i} style={[styles.paragraph, alignStart(), !isArabicBody && ltr]}>
               {block.text}
             </Text>
           );
@@ -75,7 +86,12 @@ export default function LegalScreen() {
 }
 
 /** Arabic body text: right-aligned, RTL, with generous line height for legibility. */
-const rtl = { textAlign: 'right', writingDirection: 'rtl' } as const;
+// Alignment comes from `alignStart()` — an explicit `textAlign: 'right'` is mirrored
+// by the platform inside an RTL subtree and lands on the left. These carry only the
+// paragraph's base direction (iOS; Android derives it from the text itself).
+const rtl = { writingDirection: 'rtl' } as const;
+/** English bodies read left-to-right even inside an RTL app. */
+const ltr = { writingDirection: 'ltr' } as const;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#082926' },
@@ -94,14 +110,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontFamily: FONT.bold, color: '#FFFFFF' },
 
   content: { paddingHorizontal: 20, paddingTop: 8 },
-  docTitle: { ...rtl, fontSize: 22, fontFamily: 'Inter_700Bold', color: '#FFFFFF', lineHeight: 34 },
+  docTitle: { ...rtl, fontSize: 22, fontFamily: FONT.bold, color: '#FFFFFF', lineHeight: 34 },
   updated: {
     ...rtl,
     fontSize: 13,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: FONT.regular,
     color: '#7fb5ae',
     marginTop: 6,
     marginBottom: 18,
@@ -109,7 +125,7 @@ const styles = StyleSheet.create({
   heading: {
     ...rtl,
     fontSize: 17,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: FONT.bold,
     color: '#FFFFFF',
     lineHeight: 28,
     marginTop: 26,
@@ -118,14 +134,15 @@ const styles = StyleSheet.create({
   paragraph: {
     ...rtl,
     fontSize: 15,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: FONT.regular,
     color: '#cfe3df',
     lineHeight: 27,
     marginBottom: 12,
   },
   bullets: { marginBottom: 12, gap: 8 },
-  // row-reverse puts the dot on the right, where an Arabic reader expects it.
-  bulletRow: { flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10 },
+  // Plain `row`: the root direction puts the dot on the right in Arabic and on the
+  // left in English on its own. Reversing it by hand would double-flip.
+  bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   dot: {
     width: 5,
     height: 5,
@@ -137,7 +154,7 @@ const styles = StyleSheet.create({
     ...rtl,
     flex: 1,
     fontSize: 15,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: FONT.regular,
     color: '#cfe3df',
     lineHeight: 27,
   },

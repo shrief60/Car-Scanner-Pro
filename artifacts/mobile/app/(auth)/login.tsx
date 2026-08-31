@@ -21,11 +21,16 @@ import { FormField } from '@/components/FormField';
 import { useAuth } from '@/context/AuthContext';
 import { applyServerErrors } from '@/lib/serverErrors';
 import { loginSchema, LoginValues } from '@/lib/schemas';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { useLocale } from '@/context/LocaleContext';
+import { alignStart } from '@/lib/direction';
 
 const FIELDS = ['email', 'password'] as const;
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useLocale();
   const { loginWithPassword } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -78,12 +83,12 @@ export default function LoginScreen() {
             style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
             onPress={() => router.back()}
           >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name={mirrorIcon('arrow-back')} size={24} color="#FFFFFF" />
           </Pressable>
 
           <View style={styles.header}>
-            <Text style={styles.title}>Sign In</Text>
-            <Text style={styles.subtitle}>Welcome back to Qar</Text>
+            <Text style={[styles.title, alignStart()]}>{t('auth.signIn')}</Text>
+            <Text style={[styles.subtitle, alignStart()]}>{t('auth.welcomeBack')}</Text>
           </View>
 
           <View style={styles.form}>
@@ -92,7 +97,7 @@ export default function LoginScreen() {
               name="email"
               render={({ field, fieldState }) => (
                 <FormField
-                  label="Email" placeholder="Enter your email" icon="mail-outline"
+                  label={t('auth.email')} placeholder={t('auth.emailPlaceholder')} icon="mail-outline"
                   value={field.value} onChange={field.onChange} onBlur={field.onBlur}
                   error={fieldState.error?.message}
                   keyboardType="email-address"
@@ -108,7 +113,7 @@ export default function LoginScreen() {
               render={({ field, fieldState }) => (
                 <FormField
                   ref={passwordRef}
-                  label="Password" placeholder="Enter your password" icon="lock-closed-outline"
+                  label={t('auth.password')} placeholder={t('auth.passwordPlaceholder')} icon="lock-closed-outline"
                   value={field.value} onChange={field.onChange} onBlur={field.onBlur}
                   error={fieldState.error?.message}
                   secure show={showPassword} setShow={setShowPassword}
@@ -121,7 +126,7 @@ export default function LoginScreen() {
             {errors.root ? (
               <View style={styles.errorBox}>
                 <Ionicons name="alert-circle" size={16} color="#ef4444" />
-                <Text style={styles.errorText}>{errors.root.message}</Text>
+                <Text style={[styles.errorText, alignStart()]}>{errors.root.message}</Text>
               </View>
             ) : null}
 
@@ -137,15 +142,15 @@ export default function LoginScreen() {
               {isSubmitting ? (
                 <ActivityIndicator color="#082926" />
               ) : (
-                <Text style={styles.buttonText}>Sign In</Text>
+                <Text style={[styles.buttonText, alignStart()]}>{t('auth.signIn')}</Text>
               )}
             </Pressable>
           </View>
 
           <View style={styles.switchRow}>
-            <Text style={styles.switchText}>Don't have an account? </Text>
+            <Text style={[styles.switchText, alignStart()]}>{t('auth.noAccount')}</Text>
             <Pressable onPress={() => router.replace('/(auth)/register')}>
-              <Text style={styles.switchLink}>Create one</Text>
+              <Text style={[styles.switchLink, alignStart()]}>{t('auth.createOne')}</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -164,23 +169,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', alignSelf: 'flex-start',
   },
   header: { gap: 6 },
-  title: { fontSize: 32, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
-  subtitle: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  title: { fontSize: 32, fontFamily: FONT.bold, color: '#FFFFFF' },
+  subtitle: { fontSize: 15, fontFamily: FONT.regular, color: '#7fb5ae' },
   form: { gap: 18 },
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 12,
     borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
   },
-  errorText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444', flex: 1 },
+  errorText: { fontSize: 13, fontFamily: FONT.regular, color: '#ef4444', flex: 1 },
   button: {
     backgroundColor: '#FFFFFF', borderRadius: 14, paddingVertical: 18,
     alignItems: 'center', marginTop: 4,
   },
   buttonDisabled: { opacity: 0.35 },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  buttonText: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#082926' },
+  buttonText: { fontSize: 17, fontFamily: FONT.bold, color: '#082926' },
   switchRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' },
-  switchText: { fontSize: 14, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
-  switchLink: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF', textDecorationLine: 'underline' },
+  switchText: { fontSize: 14, fontFamily: FONT.regular, color: '#7fb5ae' },
+  switchLink: { fontSize: 14, fontFamily: FONT.semibold, color: '#FFFFFF', textDecorationLine: 'underline' },
 });

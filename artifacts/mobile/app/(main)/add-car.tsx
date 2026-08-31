@@ -16,19 +16,29 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useCars } from '@/context/CarsContext';
+import { useLocale } from '@/context/LocaleContext';
+import type { TranslationKey } from '@/i18n';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { alignInput, alignStart } from '@/lib/direction';
 
+/**
+ * `key` drives the translated label and the selection state; `apiValue` is what is
+ * POSTed. Previously the English word was all three at once, so translating the label
+ * would silently have changed the payload and broken car creation.
+ */
 const COLORS = [
-  { label: 'White',  hex: '#F5F5F5' },
-  { label: 'Black',  hex: '#1a1a1a' },
-  { label: 'Silver', hex: '#9e9e9e' },
-  { label: 'Gray',   hex: '#616161' },
-  { label: 'Red',    hex: '#e53935' },
-  { label: 'Blue',   hex: '#1e88e5' },
-  { label: 'Green',  hex: '#43a047' },
-  { label: 'Brown',  hex: '#795548' },
-  { label: 'Yellow', hex: '#fdd835' },
-  { label: 'Orange', hex: '#fb8c00' },
-];
+  { key: 'white',  apiValue: 'White',  hex: '#F5F5F5' },
+  { key: 'black',  apiValue: 'Black',  hex: '#1a1a1a' },
+  { key: 'silver', apiValue: 'Silver', hex: '#9e9e9e' },
+  { key: 'gray',   apiValue: 'Gray',   hex: '#616161' },
+  { key: 'red',    apiValue: 'Red',    hex: '#e53935' },
+  { key: 'blue',   apiValue: 'Blue',   hex: '#1e88e5' },
+  { key: 'green',  apiValue: 'Green',  hex: '#43a047' },
+  { key: 'brown',  apiValue: 'Brown',  hex: '#795548' },
+  { key: 'yellow', apiValue: 'Yellow', hex: '#fdd835' },
+  { key: 'orange', apiValue: 'Orange', hex: '#fb8c00' },
+] as const;
 
 interface PickedPhoto {
   uri: string;
@@ -38,6 +48,7 @@ interface PickedPhoto {
 
 export default function AddCarScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useLocale();
   const { addCar } = useCars();
 
   const [plate, setPlate] = useState('');
@@ -56,7 +67,7 @@ export default function AddCarScreen() {
   async function pickFromGallery() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      setErrors(p => ({ ...p, photo: 'Gallery permission is required' }));
+      setErrors(p => ({ ...p, photo: t('addCar.galleryPermission') }));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -77,7 +88,7 @@ export default function AddCarScreen() {
   async function pickFromCamera() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      setErrors(p => ({ ...p, photo: 'Camera permission is required' }));
+      setErrors(p => ({ ...p, photo: t('addCar.cameraPermission') }));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -103,7 +114,7 @@ export default function AddCarScreen() {
 
   async function handleSubmit() {
     if (!plate.trim()) {
-      setErrors({ plate: 'License plate is required' });
+      setErrors({ plate: t('addCar.plateRequired') });
       return;
     }
     setErrors({});
@@ -114,7 +125,8 @@ export default function AddCarScreen() {
         plate_number: plate.trim().toUpperCase(),
         make: make.trim() || undefined,
         model: model.trim() || undefined,
-        color: color || undefined,
+        // Send the stable English value, never the translated label.
+        color: COLORS.find(c => c.key === color)?.apiValue,
         photo: photo ?? undefined,
       });
       router.replace({
@@ -129,7 +141,7 @@ export default function AddCarScreen() {
         },
       });
     } catch (e: unknown) {
-      setErrors({ general: (e as Error).message ?? 'Failed to create car' });
+      setErrors({ general: (e as Error).message ?? t('addCar.createFailed') });
     } finally {
       setLoading(false);
     }
@@ -145,9 +157,9 @@ export default function AddCarScreen() {
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name={mirrorIcon('arrow-back')} size={24} color="#FFFFFF" />
         </Pressable>
-        <Text style={styles.title}>Add Car</Text>
+        <Text style={[styles.title, alignStart()]}>{t('addCar.title')}</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -158,7 +170,7 @@ export default function AddCarScreen() {
       >
         {/* ── Car photo ─────────────────────────────────────────────────────── */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>Car Photo (optional)</Text>
+          <Text style={[styles.fieldLabel, alignStart()]}>{t('addCar.photo')}</Text>
 
           {photo ? (
             /* Preview with remove button */
@@ -170,7 +182,7 @@ export default function AddCarScreen() {
               {/* Re-pick overlay */}
               <Pressable style={styles.rePickOverlay} onPress={pickFromGallery}>
                 <Ionicons name="pencil" size={16} color="#FFFFFF" />
-                <Text style={styles.rePickText}>Change</Text>
+                <Text style={[styles.rePickText, alignStart()]}>{t('addCar.change')}</Text>
               </Pressable>
             </View>
           ) : (
@@ -181,7 +193,7 @@ export default function AddCarScreen() {
                 onPress={pickFromGallery}
               >
                 <Ionicons name="images-outline" size={26} color="#7fb5ae" />
-                <Text style={styles.photoPickLabel}>Gallery</Text>
+                <Text style={[styles.photoPickLabel, alignStart()]}>{t('addCar.gallery')}</Text>
               </Pressable>
 
               <View style={styles.photoPickDivider} />
@@ -191,35 +203,35 @@ export default function AddCarScreen() {
                 onPress={pickFromCamera}
               >
                 <Ionicons name="camera-outline" size={26} color="#7fb5ae" />
-                <Text style={styles.photoPickLabel}>Camera</Text>
+                <Text style={[styles.photoPickLabel, alignStart()]}>{t('addCar.camera')}</Text>
               </Pressable>
             </View>
           )}
 
-          {errors.photo ? <Text style={styles.error}>{errors.photo}</Text> : null}
+          {errors.photo ? <Text style={[styles.error, alignStart()]}>{errors.photo}</Text> : null}
         </View>
 
         {/* ── License plate ─────────────────────────────────────────────────── */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>License Plate *</Text>
+          <Text style={[styles.fieldLabel, alignStart()]}>{t('addCar.plate')}</Text>
           <TextInput
-            style={[styles.input, errors.plate && styles.inputError]}
-            placeholder="e.g. ABC 1234"
+            style={[styles.input, alignInput(), errors.plate && styles.inputError]}
+            placeholder={t('addCar.platePlaceholder')}
             placeholderTextColor="#4a8a82"
             value={plate}
-            onChangeText={t => { setPlate(t); setErrors(p => ({ ...p, plate: '' })); }}
+            onChangeText={next => { setPlate(next); setErrors(p => ({ ...p, plate: '' })); }}
             autoCapitalize="characters"
             autoFocus
           />
-          {errors.plate ? <Text style={styles.error}>{errors.plate}</Text> : null}
+          {errors.plate ? <Text style={[styles.error, alignStart()]}>{errors.plate}</Text> : null}
         </View>
 
         {/* ── Make ─────────────────────────────────────────────────────────── */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>Make (Brand)</Text>
+          <Text style={[styles.fieldLabel, alignStart()]}>{t('addCar.make')}</Text>
           <TextInput
-            style={styles.input}
-            placeholder="e.g. Toyota, Kia, Hyundai"
+            style={[styles.input, alignInput()]}
+            placeholder={t('addCar.makePlaceholder')}
             placeholderTextColor="#4a8a82"
             value={make}
             onChangeText={setMake}
@@ -229,10 +241,10 @@ export default function AddCarScreen() {
 
         {/* ── Model ────────────────────────────────────────────────────────── */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>Model</Text>
+          <Text style={[styles.fieldLabel, alignStart()]}>{t('addCar.model')}</Text>
           <TextInput
-            style={styles.input}
-            placeholder="e.g. Corolla, Sportage, i10"
+            style={[styles.input, alignInput()]}
+            placeholder={t('addCar.modelPlaceholder')}
             placeholderTextColor="#4a8a82"
             value={model}
             onChangeText={setModel}
@@ -242,18 +254,18 @@ export default function AddCarScreen() {
 
         {/* ── Color ────────────────────────────────────────────────────────── */}
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>Color (optional)</Text>
+          <Text style={[styles.fieldLabel, alignStart()]}>{t('addCar.color')}</Text>
           <View style={styles.colorGrid}>
             {COLORS.map(c => (
               <Pressable
-                key={c.label}
+                key={c.key}
                 style={({ pressed }) => [
                   styles.colorItem,
-                  color === c.label && styles.colorItemSelected,
+                  color === c.key && styles.colorItemSelected,
                   pressed && { opacity: 0.8 },
                 ]}
                 onPress={() => {
-                  setColor(color === c.label ? '' : c.label);
+                  setColor(color === c.key ? '' : c.key);
                   Haptics.selectionAsync();
                 }}
               >
@@ -261,10 +273,10 @@ export default function AddCarScreen() {
                   style={[
                     styles.colorSwatch,
                     { backgroundColor: c.hex },
-                    color === c.label && styles.swatchSelected,
+                    color === c.key && styles.swatchSelected,
                   ]}
                 />
-                <Text style={styles.colorLabel}>{c.label}</Text>
+                <Text style={[styles.colorLabel, alignStart()]}>{t(`colors.${c.key}` as TranslationKey)}</Text>
               </Pressable>
             ))}
           </View>
@@ -274,7 +286,7 @@ export default function AddCarScreen() {
         {errors.general ? (
           <View style={styles.errorBox}>
             <Ionicons name="alert-circle" size={16} color="#ef4444" />
-            <Text style={styles.errorGeneral}>{errors.general}</Text>
+            <Text style={[styles.errorGeneral, alignStart()]}>{errors.general}</Text>
           </View>
         ) : null}
 
@@ -293,7 +305,7 @@ export default function AddCarScreen() {
           ) : (
             <>
               <Ionicons name="qr-code" size={20} color="#082926" />
-              <Text style={styles.buttonText}>Generate QR Code</Text>
+              <Text style={[styles.buttonText, alignStart()]}>{t('addCar.generate')}</Text>
             </>
           )}
         </Pressable>
@@ -313,10 +325,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
     justifyContent: 'center', alignItems: 'center',
   },
-  title: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  title: { fontSize: 20, fontFamily: FONT.bold, color: '#FFFFFF' },
   scroll: { paddingHorizontal: 20, paddingTop: 8, gap: 24 },
   field: { gap: 10 },
-  fieldLabel: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
+  fieldLabel: { fontSize: 14, fontFamily: FONT.medium, color: '#7fb5ae' },
 
   // Photo picker
   photoPickRow: {
@@ -332,7 +344,7 @@ const styles = StyleSheet.create({
     flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8,
   },
   photoPickDivider: { width: 1, backgroundColor: '#1a5048' },
-  photoPickLabel: { fontSize: 13, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
+  photoPickLabel: { fontSize: 13, fontFamily: FONT.medium, color: '#7fb5ae' },
 
   // Photo preview
   photoPreviewWrapper: {
@@ -343,7 +355,7 @@ const styles = StyleSheet.create({
   },
   photoPreview: { width: '100%', height: '100%' },
   removePhotoBtn: {
-    position: 'absolute', top: 8, right: 8,
+    position: 'absolute', top: 8, end: 8,
     backgroundColor: 'rgba(0,0,0,0.55)',
     borderRadius: 14,
   },
@@ -353,16 +365,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, paddingVertical: 10,
   },
-  rePickText: { fontSize: 13, fontFamily: 'Inter_500Medium', color: '#FFFFFF' },
+  rePickText: { fontSize: 13, fontFamily: FONT.medium, color: '#FFFFFF' },
 
   // Text inputs
   input: {
     backgroundColor: '#0e3b33', borderWidth: 1, borderColor: '#1a5048',
     borderRadius: 14, paddingHorizontal: 18, paddingVertical: 16,
-    fontSize: 16, fontFamily: 'Inter_500Medium', color: '#FFFFFF',
+    fontSize: 16, fontFamily: FONT.medium, color: '#FFFFFF',
   },
   inputError: { borderColor: '#ef4444' },
-  error: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#ef4444' },
+  error: { fontSize: 12, fontFamily: FONT.regular, color: '#ef4444' },
 
   // Color swatches
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
@@ -373,7 +385,7 @@ const styles = StyleSheet.create({
     borderWidth: 2, borderColor: 'transparent',
   },
   swatchSelected: { borderColor: '#FFFFFF', transform: [{ scale: 1.15 }] },
-  colorLabel: { fontSize: 11, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  colorLabel: { fontSize: 11, fontFamily: FONT.regular, color: '#7fb5ae' },
 
   // General error
   errorBox: {
@@ -381,7 +393,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 12,
     borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
   },
-  errorGeneral: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444' },
+  errorGeneral: { flex: 1, fontSize: 13, fontFamily: FONT.regular, color: '#ef4444' },
 
   // Submit button
   button: {
@@ -391,5 +403,5 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.35 },
   buttonPressed: { opacity: 0.85 },
-  buttonText: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#082926' },
+  buttonText: { fontSize: 17, fontFamily: FONT.bold, color: '#082926' },
 });

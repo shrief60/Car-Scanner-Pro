@@ -1,15 +1,19 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { FONT } from '@/lib/typography';
+import { useLocale } from '@/context/LocaleContext';
+import { alignStart } from '@/lib/direction';
 
 /** The red-tinted error row + inline Retry, matching `app/(main)/profile.tsx`. */
 export function ErrorRow({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useLocale();
   return (
     <View style={styles.errorBox}>
       <Ionicons name="alert-circle-outline" size={18} color="#ef4444" />
-      <Text style={styles.errorText}>{message}</Text>
+      <Text style={[styles.errorText, alignStart()]}>{message}</Text>
       <Pressable onPress={onRetry} hitSlop={8}>
-        <Text style={styles.retryText}>Retry</Text>
+        <Text style={[styles.retryText, alignStart()]}>{t('common.retry')}</Text>
       </Pressable>
     </View>
   );
@@ -29,7 +33,7 @@ export function EmptyState({
       <View style={styles.emptyIcon}>
         <Ionicons name={icon as any} size={28} color="#7fb5ae" />
       </View>
-      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={[styles.emptyTitle, alignStart()]}>{title}</Text>
       {!!subtitle && <Text style={styles.emptySubtitle}>{subtitle}</Text>}
     </View>
   );
@@ -46,8 +50,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(239,68,68,0.25)',
   },
-  errorText: { flex: 1, fontSize: 12, fontFamily: 'Inter_400Regular', color: '#ef4444' },
-  retryText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
+  errorText: { flex: 1, fontSize: 12, fontFamily: FONT.regular, color: '#ef4444' },
+  retryText: { fontSize: 12, fontFamily: FONT.semibold, color: '#FFFFFF' },
 
   empty: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24, gap: 6 },
   emptyIcon: {
@@ -61,10 +65,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-  emptyTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
+  emptyTitle: { fontSize: 16, fontFamily: FONT.semibold, color: '#FFFFFF' },
   emptySubtitle: {
     fontSize: 13,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: FONT.regular,
     color: '#7fb5ae',
     textAlign: 'center',
     lineHeight: 19,

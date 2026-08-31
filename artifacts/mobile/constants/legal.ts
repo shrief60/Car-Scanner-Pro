@@ -1,3 +1,5 @@
+import type { Locale } from '@/i18n';
+import { PRIVACY_EN, REFUND_EN, TERMS_EN } from './legal.en';
 /**
  * Qar's legal documents.
  *
@@ -5,9 +7,10 @@
  * touching TSX, and parsed once at module load:
  *   `## `  heading      `- `  bullet      blank line  paragraph break
  *
- * The bodies are Arabic; the app chrome around them stays English, matching the rest
- * of the UI. Rendering is right-to-left per-block (see app/legal/[doc].tsx) rather
- * than flipping the whole app with I18nManager.
+ * Each document carries both locales. The Arabic is the authoritative text — it is the
+ * version written for Egyptian law; the English in `legal.en.ts` is a translation and
+ * should be reviewed by a lawyer before it is relied on. The Arabic body is always
+ * rendered right-to-left per block, whatever the UI language.
  */
 
 export type LegalSlug = 'terms' | 'privacy' | 'refund';
@@ -19,12 +22,11 @@ export type Block =
 
 export interface LegalDoc {
   slug: LegalSlug;
-  /** Shown in the screen header — English, like the rest of the chrome. */
-  title: string;
-  /** Shown as the document's own title, in Arabic. */
-  arabicTitle: string;
-  lastUpdated: string;
-  blocks: Block[];
+  /** Per-locale title, shown as the document's own heading. */
+  title: Record<Locale, string>;
+  lastUpdated: Record<Locale, string>;
+  /** Parsed bodies per locale. Arabic is authoritative; see legal.en.ts. */
+  body: Record<Locale, Block[]>;
 }
 
 function parse(source: string): Block[] {
@@ -723,29 +725,26 @@ Qar ليست بالضرورة البائع أو مقدم الخدمة.
 Qar — مصر
 `;
 
-const LAST_UPDATED = 'أغسطس ٢٠٢٦';
+const LAST_UPDATED: Record<Locale, string> = { ar: 'أغسطس ٢٠٢٦', en: 'August 2026' };
 
 export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
   terms: {
     slug: 'terms',
-    title: 'Terms of Use',
-    arabicTitle: 'شروط الاستخدام — Qar',
+    title: { ar: 'شروط الاستخدام — Qar', en: 'Terms of Use — Qar' },
     lastUpdated: LAST_UPDATED,
-    blocks: parse(TERMS),
+    body: { ar: parse(TERMS), en: parse(TERMS_EN) },
   },
   privacy: {
     slug: 'privacy',
-    title: 'Privacy Policy',
-    arabicTitle: 'سياسة الخصوصية — Qar',
+    title: { ar: 'سياسة الخصوصية — Qar', en: 'Privacy Policy — Qar' },
     lastUpdated: LAST_UPDATED,
-    blocks: parse(PRIVACY),
+    body: { ar: parse(PRIVACY), en: parse(PRIVACY_EN) },
   },
   refund: {
     slug: 'refund',
-    title: 'Refund Policy',
-    arabicTitle: 'سياسة الاسترداد — Qar',
+    title: { ar: 'سياسة الاسترداد — Qar', en: 'Refund Policy — Qar' },
     lastUpdated: LAST_UPDATED,
-    blocks: parse(REFUND),
+    body: { ar: parse(REFUND), en: parse(REFUND_EN) },
   },
 };
 

@@ -16,6 +16,10 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withSequence,
 } from 'react-native-reanimated';
 import { sendAlert, AlertType } from '@/services/scan';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { alignStart } from '@/lib/direction';
+import { useLocale } from '@/context/LocaleContext';
 
 const ALERTS: { id: AlertType; icon: string; label: string; description: string; color: string }[] = [
   { id: 'double_parked', icon: 'car-sport',  label: 'Blocking My Car',  description: 'This car is blocking me in',     color: '#1e6b60' },
@@ -55,12 +59,12 @@ function AlertButton({
           )}
         </View>
         <View style={styles.alertInfo}>
-          <Text style={[styles.alertLabel, sent && styles.alertLabelSent]}>{item.label}</Text>
-          <Text style={styles.alertDesc}>{item.description}</Text>
+          <Text style={[styles.alertLabel, alignStart(), sent && styles.alertLabelSent]}>{item.label}</Text>
+          <Text style={[styles.alertDesc, alignStart()]}>{item.description}</Text>
         </View>
         {sent
           ? <Ionicons name="checkmark-circle" size={24} color="#7fb5ae" />
-          : <Ionicons name="chevron-forward" size={20} color="#7fb5ae" />
+          : <Ionicons name={mirrorIcon('chevron-forward')} size={20} color="#7fb5ae" />
         }
       </Pressable>
     </Animated.View>
@@ -68,6 +72,7 @@ function AlertButton({
 }
 
 export default function ScanNotificationScreen() {
+  const { t } = useLocale();
   const insets = useSafeAreaInsets();
   const { qrCode, plate, make, model, color } =
     useLocalSearchParams<{ id: string; qrCode: string; plate: string; make: string; model: string; color: string }>();
@@ -115,21 +120,21 @@ export default function ScanNotificationScreen() {
           <View style={styles.carIconBg}>
             <Ionicons name="car" size={36} color="#7fb5ae" />
           </View>
-          <Text style={styles.question}>Need to reach the car owner?</Text>
+          <Text style={styles.question}>{t('scanAlert.heading')}</Text>
           {plate ? (
             <View style={styles.plateBadge}>
-              <Text style={styles.plateText}>{plate}</Text>
+              <Text style={[styles.plateText, alignStart()]}>{plate}</Text>
             </View>
           ) : null}
-          {carDesc ? <Text style={styles.carMeta}>{carDesc}</Text> : null}
-          {color ? <Text style={styles.carMeta}>{color}</Text> : null}
+          {carDesc ? <Text style={[styles.carMeta, alignStart()]}>{carDesc}</Text> : null}
+          {color ? <Text style={[styles.carMeta, alignStart()]}>{color}</Text> : null}
         </View>
 
         {/* Success banner */}
         {showSuccess && (
           <View style={styles.successBanner}>
             <Ionicons name="checkmark-circle" size={20} color="#4ade80" />
-            <Text style={styles.successText}>Alert sent successfully</Text>
+            <Text style={[styles.successText, alignStart()]}>{t('scanAlert.sent')}</Text>
           </View>
         )}
 
@@ -137,13 +142,13 @@ export default function ScanNotificationScreen() {
         {error ? (
           <View style={styles.errorBanner}>
             <Ionicons name="alert-circle" size={16} color="#ef4444" />
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={[styles.errorText, alignStart()]}>{error}</Text>
           </View>
         ) : null}
 
         {/* Alert buttons */}
         <View style={styles.alerts}>
-          <Text style={styles.alertsTitle}>Choose an alert type</Text>
+          <Text style={[styles.alertsTitle, alignStart()]}>{t('scanAlert.choose')}</Text>
           {ALERTS.map(a => (
             <AlertButton
               key={a.id}
@@ -183,30 +188,30 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#1a5048',
     justifyContent: 'center', alignItems: 'center',
   },
-  question: { fontSize: 24, fontFamily: 'Inter_700Bold', color: '#FFFFFF', textAlign: 'center' },
+  question: { fontSize: 24, fontFamily: FONT.bold, color: '#FFFFFF', textAlign: 'center' },
   plateBadge: {
     backgroundColor: '#0e3b33', borderRadius: 10,
     paddingHorizontal: 16, paddingVertical: 8,
     borderWidth: 1, borderColor: '#1a5048',
   },
-  plateText: { fontSize: 22, fontFamily: 'Inter_700Bold', color: '#FFFFFF', letterSpacing: 3 },
-  carMeta: { fontSize: 14, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  plateText: { fontSize: 22, fontFamily: FONT.bold, color: '#FFFFFF', letterSpacing: 3 },
+  carMeta: { fontSize: 14, fontFamily: FONT.regular, color: '#7fb5ae' },
   successBanner: {
     backgroundColor: 'rgba(74,222,128,0.12)', borderRadius: 12,
     paddingVertical: 14, paddingHorizontal: 16,
     flexDirection: 'row', alignItems: 'center', gap: 10,
     borderWidth: 1, borderColor: 'rgba(74,222,128,0.25)',
   },
-  successText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#4ade80' },
+  successText: { fontSize: 15, fontFamily: FONT.semibold, color: '#4ade80' },
   errorBanner: {
     backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 12,
     paddingVertical: 12, paddingHorizontal: 16,
     flexDirection: 'row', alignItems: 'center', gap: 10,
     borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
   },
-  errorText: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444' },
+  errorText: { flex: 1, fontSize: 13, fontFamily: FONT.regular, color: '#ef4444' },
   alerts: { gap: 12 },
-  alertsTitle: { fontSize: 13, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
+  alertsTitle: { fontSize: 13, fontFamily: FONT.medium, color: '#7fb5ae' },
   alertBtn: {
     backgroundColor: '#0e3b33', borderRadius: 16, padding: 16,
     flexDirection: 'row', alignItems: 'center', gap: 14,
@@ -215,9 +220,9 @@ const styles = StyleSheet.create({
   alertBtnSent: { opacity: 0.6 },
   alertIconBg: { width: 52, height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center' },
   alertInfo: { flex: 1 },
-  alertLabel: { fontSize: 17, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
+  alertLabel: { fontSize: 17, fontFamily: FONT.semibold, color: '#FFFFFF' },
   alertLabelSent: { color: '#7fb5ae' },
-  alertDesc: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#7fb5ae', marginTop: 2 },
+  alertDesc: { fontSize: 13, fontFamily: FONT.regular, color: '#7fb5ae', marginTop: 2 },
   privacyNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  privacyText: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#4a8a82', textAlign: 'center' },
+  privacyText: { fontSize: 12, fontFamily: FONT.regular, color: '#4a8a82', textAlign: 'center' },
 });

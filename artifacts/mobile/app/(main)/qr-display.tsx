@@ -13,10 +13,15 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import QRCode from 'react-native-qrcode-svg';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { alignStart } from '@/lib/direction';
+import { useLocale } from '@/context/LocaleContext';
 
 const QR_SIZE = 240;
 
 export default function QRDisplayScreen() {
+  const { t } = useLocale();
   const insets = useSafeAreaInsets();
   const { plate, make, model, color, qrCode } =
     useLocalSearchParams<{
@@ -39,12 +44,12 @@ export default function QRDisplayScreen() {
 
   async function handleShare() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert('Share QR', 'Download & share coming in the next update.', [{ text: 'OK' }]);
+    Alert.alert(t('qr.shareTitle'), t('qr.shareBody'), [{ text: t('common.ok') }]);
   }
 
   async function handleDownload() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert('Download QR', 'Download & print coming in the next update.', [{ text: 'OK' }]);
+    Alert.alert(t('qr.downloadTitle'), t('qr.downloadBody'), [{ text: t('common.ok') }]);
   }
 
   return (
@@ -54,9 +59,9 @@ export default function QRDisplayScreen() {
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name={mirrorIcon('arrow-back')} size={24} color="#FFFFFF" />
         </Pressable>
-        <Text style={styles.title}>QR Code</Text>
+        <Text style={[styles.title, alignStart()]}>{t('qr.title')}</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -66,10 +71,10 @@ export default function QRDisplayScreen() {
       >
         {/* Car info */}
         <View style={styles.carInfo}>
-          <Text style={styles.plateLabel}>License Plate</Text>
-          <Text style={styles.plateValue}>{plate}</Text>
-          {carDesc ? <Text style={styles.carMeta}>{carDesc}</Text> : null}
-          {color ? <Text style={styles.carMeta}>{color}</Text> : null}
+          <Text style={[styles.plateLabel, alignStart()]}>{t('qr.licensePlate')}</Text>
+          <Text style={[styles.plateValue, alignStart()]}>{plate}</Text>
+          {carDesc ? <Text style={[styles.carMeta, alignStart()]}>{carDesc}</Text> : null}
+          {color ? <Text style={[styles.carMeta, alignStart()]}>{color}</Text> : null}
         </View>
 
         {/* QR Code */}
@@ -87,16 +92,16 @@ export default function QRDisplayScreen() {
             ) : (
               <View style={[styles.qrContainer, styles.qrPlaceholder]}>
                 <Ionicons name="qr-code" size={80} color="#ccc" />
-                <Text style={styles.qrMissing}>QR code not available</Text>
+                <Text style={[styles.qrMissing, alignStart()]}>{t('qr.notAvailable')}</Text>
               </View>
             )}
-            <View style={[styles.corner, styles.cornerTL]} />
-            <View style={[styles.corner, styles.cornerTR]} />
-            <View style={[styles.corner, styles.cornerBL]} />
-            <View style={[styles.corner, styles.cornerBR]} />
+            <View style={[styles.corner, styles.cornerTS]} />
+            <View style={[styles.corner, styles.cornerTE]} />
+            <View style={[styles.corner, styles.cornerBS]} />
+            <View style={[styles.corner, styles.cornerBE]} />
           </View>
           <Text style={styles.qrHint}>
-            Attach this code to your car to receive anonymous alerts
+            {t('qr.attachHint')}
           </Text>
         </View>
 
@@ -107,22 +112,22 @@ export default function QRDisplayScreen() {
             onPress={handleDownload}
           >
             <Ionicons name="download-outline" size={22} color="#082926" />
-            <Text style={styles.actionBtnTextPrimary}>Download QR</Text>
+            <Text style={[styles.actionBtnTextPrimary, alignStart()]}>{t('qr.download')}</Text>
           </Pressable>
           <Pressable
             style={({ pressed }) => [styles.actionBtn, styles.actionBtnSecondary, pressed && { opacity: 0.85 }]}
             onPress={handleShare}
           >
             <Ionicons name="share-outline" size={22} color="#FFFFFF" />
-            <Text style={styles.actionBtnTextSecondary}>Share</Text>
+            <Text style={[styles.actionBtnTextSecondary, alignStart()]}>{t('qr.share')}</Text>
           </Pressable>
         </View>
 
         {/* Info box */}
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color="#7fb5ae" />
-          <Text style={styles.infoText}>
-            When someone scans this code they can send you an alert — your phone number stays completely hidden
+          <Text style={[styles.infoText, alignStart()]}>
+            {t('qr.privacyNote')}
           </Text>
         </View>
 
@@ -130,7 +135,7 @@ export default function QRDisplayScreen() {
           style={({ pressed }) => [styles.homeBtn, pressed && { opacity: 0.7 }]}
           onPress={() => router.replace('/(main)/home')}
         >
-          <Text style={styles.homeBtnText}>Back to Home</Text>
+          <Text style={[styles.homeBtnText, alignStart()]}>{t('qr.backHome')}</Text>
         </Pressable>
       </ScrollView>
     </View>
@@ -148,12 +153,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
     justifyContent: 'center', alignItems: 'center',
   },
-  title: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  title: { fontSize: 20, fontFamily: FONT.bold, color: '#FFFFFF' },
   scroll: { paddingHorizontal: 24, paddingTop: 8, gap: 28, alignItems: 'center' },
   carInfo: { alignItems: 'center', gap: 4 },
-  plateLabel: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
-  plateValue: { fontSize: 32, fontFamily: 'Inter_700Bold', color: '#FFFFFF', letterSpacing: 4 },
-  carMeta: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  plateLabel: { fontSize: 13, fontFamily: FONT.regular, color: '#7fb5ae' },
+  plateValue: { fontSize: 32, fontFamily: FONT.bold, color: '#FFFFFF', letterSpacing: 4 },
+  carMeta: { fontSize: 15, fontFamily: FONT.regular, color: '#7fb5ae' },
   qrWrapper: { alignItems: 'center', gap: 14 },
   qrCard: {
     backgroundColor: '#FFFFFF', padding: 20, borderRadius: 24, position: 'relative',
@@ -167,12 +172,15 @@ const styles = StyleSheet.create({
   },
   qrMissing: { fontSize: 12, color: '#999' },
   corner: { position: 'absolute', width: 24, height: 24, borderColor: '#082926' },
-  cornerTL: { top: 8, left: 8, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 6 },
-  cornerTR: { top: 8, right: 8, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 6 },
-  cornerBL: { bottom: 8, left: 8, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 6 },
-  cornerBR: { bottom: 8, right: 8, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 6 },
+  // Logical on BOTH axes. Mixing physical `left` with `borderLeftWidth` is what pulls
+  // these brackets apart under RTL: the position mirrors and the border does not, so a
+  // top-left bracket ends up on the right still drawing its left edge.
+  cornerTS: { top: 8, start: 8, borderTopWidth: 3, borderStartWidth: 3, borderTopStartRadius: 6 },
+  cornerTE: { top: 8, end: 8, borderTopWidth: 3, borderEndWidth: 3, borderTopEndRadius: 6 },
+  cornerBS: { bottom: 8, start: 8, borderBottomWidth: 3, borderStartWidth: 3, borderBottomStartRadius: 6 },
+  cornerBE: { bottom: 8, end: 8, borderBottomWidth: 3, borderEndWidth: 3, borderBottomEndRadius: 6 },
   qrHint: {
-    fontSize: 13, fontFamily: 'Inter_400Regular', color: '#7fb5ae',
+    fontSize: 13, fontFamily: FONT.regular, color: '#7fb5ae',
     textAlign: 'center', maxWidth: 260, lineHeight: 20,
   },
   actions: { flexDirection: 'row', gap: 12, width: '100%' },
@@ -182,14 +190,14 @@ const styles = StyleSheet.create({
   },
   actionBtnPrimary: { backgroundColor: '#FFFFFF' },
   actionBtnSecondary: { backgroundColor: '#0e3b33', borderWidth: 1, borderColor: '#1a5048' },
-  actionBtnTextPrimary: { fontSize: 15, fontFamily: 'Inter_700Bold', color: '#082926' },
-  actionBtnTextSecondary: { fontSize: 15, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  actionBtnTextPrimary: { fontSize: 15, fontFamily: FONT.bold, color: '#082926' },
+  actionBtnTextSecondary: { fontSize: 15, fontFamily: FONT.bold, color: '#FFFFFF' },
   infoBox: {
     backgroundColor: '#0e3b33', borderRadius: 14, padding: 16,
     flexDirection: 'row', gap: 10, alignItems: 'flex-start',
     borderWidth: 1, borderColor: '#1a5048', width: '100%',
   },
-  infoText: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', color: '#7fb5ae', lineHeight: 20 },
+  infoText: { flex: 1, fontSize: 13, fontFamily: FONT.regular, color: '#7fb5ae', lineHeight: 20 },
   homeBtn: { paddingVertical: 12, paddingHorizontal: 24 },
-  homeBtnText: { fontSize: 15, fontFamily: 'Inter_500Medium', color: '#7fb5ae', textDecorationLine: 'underline' },
+  homeBtnText: { fontSize: 15, fontFamily: FONT.medium, color: '#7fb5ae', textDecorationLine: 'underline' },
 });

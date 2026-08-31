@@ -13,6 +13,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { scanQrCode } from '@/services/scan';
+import { FONT } from '@/lib/typography';
+import { alignStart } from '@/lib/direction';
+import { useLocale } from '@/context/LocaleContext';
 
 /**
  * Extract the qrCode token from whatever the QR encodes.
@@ -33,6 +36,7 @@ function extractQrCode(raw: string): string {
 }
 
 export default function ScannerScreen() {
+  const { t } = useLocale();
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
@@ -64,7 +68,7 @@ export default function ScannerScreen() {
         },
       });
     } catch (e: unknown) {
-      setScanError((e as Error).message ?? 'Could not read this QR code');
+      setScanError((e as Error).message ?? t('scanner.unreadable'));
       setScanned(false);
     } finally {
       setResolving(false);
@@ -83,16 +87,16 @@ export default function ScannerScreen() {
     return (
       <View style={[styles.center, { paddingTop: topPad, paddingBottom: botPad }]}>
         <Ionicons name="camera-outline" size={64} color="#1a5048" />
-        <Text style={styles.permTitle}>Camera Access Required</Text>
-        <Text style={styles.permSubtitle}>We need camera access to scan QR codes</Text>
+        <Text style={styles.permTitle}>{t('scanner.permissionTitle')}</Text>
+        <Text style={styles.permSubtitle}>{t('scanner.permissionBody')}</Text>
         <Pressable
           style={({ pressed }) => [styles.permBtn, pressed && { opacity: 0.85 }]}
           onPress={requestPermission}
         >
-          <Text style={styles.permBtnText}>Allow Access</Text>
+          <Text style={[styles.permBtnText, alignStart()]}>{t('scanner.allow')}</Text>
         </Pressable>
         <Pressable style={styles.cancelBtn} onPress={() => router.back()}>
-          <Text style={styles.cancelText}>Cancel</Text>
+          <Text style={[styles.cancelText, alignStart()]}>{t('common.cancel')}</Text>
         </Pressable>
       </View>
     );
@@ -116,30 +120,30 @@ export default function ScannerScreen() {
           >
             <Ionicons name="close" size={26} color="#FFFFFF" />
           </Pressable>
-          <Text style={styles.scanTitle}>Scan QR Code</Text>
+          <Text style={[styles.scanTitle, alignStart()]}>{t('scanner.title')}</Text>
           <View style={{ width: 44 }} />
         </View>
 
         {/* Frame */}
         <View style={styles.frameArea}>
           <View style={styles.frame}>
-            <View style={[styles.fc, styles.fcTL]} />
-            <View style={[styles.fc, styles.fcTR]} />
-            <View style={[styles.fc, styles.fcBL]} />
-            <View style={[styles.fc, styles.fcBR]} />
+            <View style={[styles.fc, styles.fcTS]} />
+            <View style={[styles.fc, styles.fcTE]} />
+            <View style={[styles.fc, styles.fcBS]} />
+            <View style={[styles.fc, styles.fcBE]} />
           </View>
           {resolving ? (
             <View style={styles.resolving}>
               <ActivityIndicator color="#FFFFFF" />
-              <Text style={styles.hint}>Looking up car…</Text>
+              <Text style={styles.hint}>{t('scanner.looking')}</Text>
             </View>
           ) : (
-            <Text style={styles.hint}>Point the camera at a Qar QR code</Text>
+            <Text style={styles.hint}>{t('scanner.aim')}</Text>
           )}
           {scanError ? (
             <View style={styles.errorBanner}>
               <Ionicons name="alert-circle" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>{scanError}</Text>
+              <Text style={[styles.errorText, alignStart()]}>{scanError}</Text>
             </View>
           ) : null}
         </View>
@@ -151,7 +155,7 @@ export default function ScannerScreen() {
               style={({ pressed }) => [styles.rescanBtn, pressed && { opacity: 0.85 }]}
               onPress={() => { setScanned(false); setScanError(''); }}
             >
-              <Text style={styles.rescanText}>Scan Again</Text>
+              <Text style={[styles.rescanText, alignStart()]}>{t('scanner.scanAgain')}</Text>
             </Pressable>
           )}
         </View>
@@ -166,15 +170,15 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: '#082926',
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 16,
   },
-  permTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', color: '#FFFFFF', textAlign: 'center' },
-  permSubtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: '#7fb5ae', textAlign: 'center' },
+  permTitle: { fontSize: 22, fontFamily: FONT.bold, color: '#FFFFFF', textAlign: 'center' },
+  permSubtitle: { fontSize: 14, fontFamily: FONT.regular, color: '#7fb5ae', textAlign: 'center' },
   permBtn: {
     backgroundColor: '#FFFFFF', borderRadius: 14,
     paddingVertical: 16, paddingHorizontal: 32, alignItems: 'center', marginTop: 8,
   },
-  permBtnText: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#082926' },
+  permBtnText: { fontSize: 16, fontFamily: FONT.bold, color: '#082926' },
   cancelBtn: { paddingVertical: 12 },
-  cancelText: { fontSize: 15, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
+  cancelText: { fontSize: 15, fontFamily: FONT.medium, color: '#7fb5ae' },
   overlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'space-between' },
   topBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -185,17 +189,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center', alignItems: 'center',
   },
-  scanTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  scanTitle: { fontSize: 18, fontFamily: FONT.bold, color: '#FFFFFF' },
   frameArea: { alignItems: 'center', gap: 20 },
   frame: { width: 240, height: 240, position: 'relative' },
   fc: { position: 'absolute', width: 32, height: 32, borderColor: '#FFFFFF' },
-  fcTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 8 },
-  fcTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 8 },
-  fcBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 8 },
-  fcBR: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 8 },
+  // Logical on BOTH axes — see the note on qr-display's corners. A physical position
+  // with a physical border comes apart the moment the layout mirrors.
+  fcTS: { top: 0, start: 0, borderTopWidth: 3, borderStartWidth: 3, borderTopStartRadius: 8 },
+  fcTE: { top: 0, end: 0, borderTopWidth: 3, borderEndWidth: 3, borderTopEndRadius: 8 },
+  fcBS: { bottom: 0, start: 0, borderBottomWidth: 3, borderStartWidth: 3, borderBottomStartRadius: 8 },
+  fcBE: { bottom: 0, end: 0, borderBottomWidth: 3, borderEndWidth: 3, borderBottomEndRadius: 8 },
   resolving: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   hint: {
-    fontSize: 14, fontFamily: 'Inter_400Regular',
+    fontSize: 14, fontFamily: FONT.regular,
     color: 'rgba(255,255,255,0.85)', textAlign: 'center', maxWidth: 240,
   },
   errorBanner: {
@@ -203,7 +209,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239,68,68,0.85)', borderRadius: 10,
     paddingVertical: 10, paddingHorizontal: 14,
   },
-  errorText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#FFFFFF', flex: 1 },
+  errorText: { fontSize: 13, fontFamily: FONT.regular, color: '#FFFFFF', flex: 1 },
   bottomArea: {
     alignItems: 'center', backgroundColor: 'rgba(8,41,38,0.6)', paddingTop: 16,
   },
@@ -211,5 +217,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', borderRadius: 12,
     paddingVertical: 14, paddingHorizontal: 32,
   },
-  rescanText: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#082926' },
+  rescanText: { fontSize: 16, fontFamily: FONT.bold, color: '#082926' },
 });

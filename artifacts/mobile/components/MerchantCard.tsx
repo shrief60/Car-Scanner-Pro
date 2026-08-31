@@ -5,6 +5,9 @@ import { RemoteImage } from '@/components/RemoteImage';
 import { Skeleton } from '@/components/Skeleton';
 import { humanizeActivity } from '@/lib/format';
 import type { Merchant } from '@/types/merchants';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { alignStart } from '@/lib/direction';
 
 /** Fixed height so the merchants list can use `getItemLayout` too. 56 logo + 14×2. */
 export const MERCHANT_ITEM_HEIGHT = 84;
@@ -34,14 +37,14 @@ export function MerchantCard({ merchant, onPress }: { merchant: Merchant; onPres
         recyclingKey={`merchant:${merchant.id}`}
       />
       <View style={styles.body}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={[styles.name, alignStart()]} numberOfLines={1}>
           {merchant.shop_name}
         </Text>
-        <Text style={styles.meta} numberOfLines={1}>
+        <Text style={[styles.meta, alignStart()]} numberOfLines={1}>
           {subtitle}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#7fb5ae" />
+      <Ionicons name={mirrorIcon('chevron-forward')} size={20} color="#7fb5ae" />
     </Pressable>
   );
 }
@@ -72,6 +75,6 @@ const styles = StyleSheet.create({
   },
   cardPressed: { opacity: 0.78, transform: [{ scale: 0.985 }] },
   body: { flex: 1 },
-  name: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
-  meta: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#7fb5ae', marginTop: 3 },
+  name: { fontSize: 15, fontFamily: FONT.semibold, color: '#FFFFFF' },
+  meta: { fontSize: 12, fontFamily: FONT.regular, color: '#7fb5ae', marginTop: 3 },
 });

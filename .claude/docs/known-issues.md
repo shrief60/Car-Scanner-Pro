@@ -93,3 +93,98 @@ Anything grepping `attached_assets/` will conclude those endpoints don't exist.
 
 Canonical copy: `.claude/reference/Qar.postman_collection.json` (41 endpoints,
 11 groups). Consider deleting the stale one — git history keeps it.
+
+## 8. RTL: the two traps that cost the most time
+
+Both were found by measuring on the emulator, not by reading docs, and both are
+counter-intuitive enough to be worth writing down.
+
+**`textAlign: 'right'` renders on the LEFT inside a mirrored subtree.**
+`doLeftAndRightSwapInRTL` is on by default and mirrors an explicit `left`/`right` against
+the view's **resolved layout direction** — the same treatment `marginLeft` gets. Measured
+with `I18nManager.isRTL === false` and only the root view's Yoga `direction` set to `rtl`,
+so it follows the *view*, not the native flag. Inside a mirrored subtree `'left'` is
+therefore the start edge. `lib/direction.ts` `alignStart()` / `alignEnd()` encode this.
+
+`textAlign: 'auto'` is *not* a safe substitute: Android resolves it against the view's
+direction (correct), but iOS resolves it against the **text's own** direction
+(`NSTextAlignmentNatural`), so Latin strings in an Arabic screen — a name, an email,
+`01013161388`, a car's make/model — snap back to the left while the Arabic label beside
+them sits right. That is an iOS-only bug that never reproduces on the emulator.
+
+**`writingDirection` is iOS-only.** `+201019967781` is entirely bidi-weak/neutral, so in
+an Arabic paragraph the leading `+` moves to the far end and it renders `201019967781+`.
+`writingDirection: 'ltr'` fixes it on iOS and does nothing on Android. Use
+`ltrIsolate()` (`lib/direction.ts`), which wraps the value in U+2066 … U+2069 and works
+on both. Only for genuinely Latin/numeric runs — an Egyptian plate like `ا ج ب 234` has
+strong RTL letters and must keep its natural order.
+
+## 9. Changing language no longer restarts the app — and why that took a rewrite
+
+The white screen users saw mid-switch was **Expo Go's own project loader** ("Loading from
+127.0.0.1:8082…", app icon on white). Nothing in JS runs while it is up, so no overlay
+could ever cover it. The only real fix was to stop restarting the app at all.
+
+**What forced the restart:** every style says `fontFamily: FONT.bold` (= `'AppBold'`), and
+`expo-font`'s public `loadAsync` refuses to re-point a name that is already loaded —
+`Font.js` → `loadFontInNamespaceAsync` returns early on `isLoaded(name)`.
+
+**Why that guard is skippable:** it is a JS-side optimisation only. Both native
+implementations are written to overwrite:
+
+- Android, `FontLoaderModule.kt`: `ReactFontManager.setTypeface(name, NORMAL, tf)` replaces
+  whatever the name pointed at.
+- iOS, `FontLoaderModule.swift`: unregisters an already-registered alias first, with the
+  comment *"or someone wants to override a font"*.
+
+`lib/fonts.ts` therefore calls the native `ExpoFontLoader.loadAsync` directly (via the
+public `requireNativeModule` from `expo`, not `expo-font`'s private build path) and
+re-points all four aliases in place. `app/_layout.tsx` then remounts the navigator under
+`key={locale}` so every `Text` is rebuilt against the new typeface.
+
+Result: the switch is instant, there is no loading screen in any environment, and the
+user stays on the screen they were on. `restartApp()` survives as a fallback if the alias
+overwrite ever stops working.
+
+**Two traps this created, both real and both hit:**
+
+1. **React Compiler caches anything with no reactive input.** The root view's direction
+   came from a bare `rootDirection()` call inside a memoised style array, so after a switch
+   the copy and fonts changed while the layout kept its original direction. It now derives
+   from the `locale` prop. Every other direction helper (`alignStart()`, `mirrorIcon()`, …)
+   is safe *only because* the `key={locale}` remount discards those caches — anything
+   rendered **above** that key must take direction from a prop, not from `lib/direction`.
+2. `I18nManager.forceRTL` is still called, but no longer triggers a reload. It exists only
+   so native views (a `TextInput`'s default alignment, Android's own widgets) mirror from
+   the next cold start. It also **does not survive an Expo Go cold start** — measured:
+   `nativeIsRTL` came back `false` on a fresh launch after a switch that set it. That is why
+   layout direction is driven by the root view's Yoga `direction` instead.
+
+## 10. Form rows are a deliberate LTR island
+
+`components/FormField.tsx` sets `direction: 'ltr'` on its input row, so the leading icon,
+the `+20` dialling code and the eye toggle keep their physical positions in both
+languages. Only the typed text follows the reading edge. This is a product decision (the
+user asked for it explicitly), and it has a useful side effect: inside a subtree that
+never mirrors, `textAlign: 'right'` unambiguously means right, so none of the
+`doLeftAndRightSwapInRTL` reasoning in §8 applies there.
+
+**`TextInput` does not behave like `Text`.** The swap that makes `'left'` mean "start" for
+a `Text` does not apply to an input: an input given `'left'` in Arabic put its caret on
+the literal left while its Arabic placeholder sat right. So inputs use `alignInput()`
+(names the physical edge) and everything else uses `alignStart()` (relies on the swap).
+Mixing them up is silent — it only shows as a caret on the wrong side.
+
+`alignInput()` is applied in `FormField`, `add-car.tsx` (3 inputs) and `search-car.tsx`.
+`otp.tsx`'s digit boxes are centred and exempt.
+
+## 11. `AppShellSkeleton` — where it is still used
+
+`components/AppShellSkeleton.tsx` is text-free (it must render before the locale and font
+aliases are bound) and comes in two shapes: `app` for a signed-in user and `auth` for a
+signed-out one, because the gate is crossed on the way to two different screens.
+
+Since the switch stopped restarting the app it is barely seen during a language change —
+only the brief font-alias rebind. It still earns its place at `app/index.tsx`, which shows
+it while the session hydrates from AsyncStorage on a genuine cold start; that used to be a
+bare spinner on an empty background.

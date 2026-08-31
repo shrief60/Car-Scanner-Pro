@@ -21,11 +21,16 @@ import { FormField } from '@/components/FormField';
 import { useAuth } from '@/context/AuthContext';
 import { applyServerErrors } from '@/lib/serverErrors';
 import { MIN_PASSWORD, registerSchema, RegisterValues, toE164 } from '@/lib/schemas';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { useLocale } from '@/context/LocaleContext';
+import { alignStart } from '@/lib/direction';
 
 const FIELDS = ['name', 'email', 'phone', 'password', 'confirm'] as const;
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useLocale();
   const { register } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -74,12 +79,12 @@ export default function RegisterScreen() {
   function strength(): { label: string; color: string; width: number } {
     const len = password?.length ?? 0;
     if (len === 0) return { label: '', color: 'transparent', width: 0 };
-    if (len < MIN_PASSWORD) return { label: 'Too short', color: '#ef4444', width: 0.25 };
+    if (len < MIN_PASSWORD) return { label: t('passwordStrength.tooShort'), color: '#ef4444', width: 0.25 };
     const score = [/[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter(re => re.test(password)).length;
-    if (score === 0) return { label: 'Weak', color: '#f97316', width: 0.4 };
-    if (score === 1) return { label: 'Fair', color: '#eab308', width: 0.6 };
-    if (score === 2) return { label: 'Strong', color: '#22c55e', width: 0.85 };
-    return { label: 'Very strong', color: '#16a34a', width: 1 };
+    if (score === 0) return { label: t('passwordStrength.weak'), color: '#f97316', width: 0.4 };
+    if (score === 1) return { label: t('passwordStrength.fair'), color: '#eab308', width: 0.6 };
+    if (score === 2) return { label: t('passwordStrength.strong'), color: '#22c55e', width: 0.85 };
+    return { label: t('passwordStrength.veryStrong'), color: '#16a34a', width: 1 };
   }
   const str = strength();
 
@@ -108,12 +113,12 @@ export default function RegisterScreen() {
             style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
             onPress={() => router.back()}
           >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name={mirrorIcon('arrow-back')} size={24} color="#FFFFFF" />
           </Pressable>
 
           <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join Qar and protect your car</Text>
+            <Text style={[styles.title, alignStart()]}>{t('auth.createAccount')}</Text>
+            <Text style={[styles.subtitle, alignStart()]}>{t('auth.joinQar')}</Text>
           </View>
 
           <View style={styles.form}>
@@ -122,7 +127,7 @@ export default function RegisterScreen() {
               name="name"
               render={({ field, fieldState }) => (
                 <FormField
-                  label="Full Name" placeholder="Your full name" icon="person-outline"
+                  label={t('auth.fullName')} placeholder={t('auth.fullNamePlaceholder')} icon="person-outline"
                   value={field.value} onChange={field.onChange} onBlur={field.onBlur}
                   error={fieldState.error?.message}
                   autoCapitalize="words" autoComplete="name" textContentType="name"
@@ -137,7 +142,7 @@ export default function RegisterScreen() {
               render={({ field, fieldState }) => (
                 <FormField
                   ref={emailRef}
-                  label="Email" placeholder="your@email.com" icon="mail-outline"
+                  label={t('auth.email')} placeholder={t('auth.emailPlaceholderSignup')} icon="mail-outline"
                   value={field.value} onChange={field.onChange} onBlur={field.onBlur}
                   error={fieldState.error?.message}
                   keyboardType="email-address"
@@ -153,12 +158,12 @@ export default function RegisterScreen() {
               render={({ field, fieldState }) => (
                 <FormField
                   ref={phoneRef}
-                  label="Phone Number" placeholder="10X XXX XXXX" icon="call-outline"
+                  label={t('auth.phoneNumber')} placeholder={t('auth.phonePlaceholder')} icon="call-outline"
                   value={field.value} onChange={field.onChange} onBlur={field.onBlur}
                   error={fieldState.error?.message}
                   keyboardType="phone-pad" prefix="+20" maxLength={14}
                   autoComplete="tel" textContentType="telephoneNumber"
-                  hint="We never show your number to anyone who scans your car."
+                  hint={t('auth.phoneHint')}
                   returnKeyType="next" onSubmit={() => passwordRef.current?.focus()}
                 />
               )}
@@ -171,7 +176,7 @@ export default function RegisterScreen() {
                 render={({ field, fieldState }) => (
                   <FormField
                     ref={passwordRef}
-                    label="Password" placeholder="Choose a password" icon="lock-closed-outline"
+                    label={t('auth.password')} placeholder={t('auth.choosePassword')} icon="lock-closed-outline"
                     value={field.value} onChange={field.onChange} onBlur={field.onBlur}
                     error={fieldState.error?.message}
                     secure show={showPassword} setShow={setShowPassword}
@@ -185,7 +190,7 @@ export default function RegisterScreen() {
                   <View style={styles.strengthBar}>
                     <View style={[styles.strengthFill, { width: `${str.width * 100}%` as any, backgroundColor: str.color }]} />
                   </View>
-                  <Text style={[styles.strengthLabel, { color: str.color }]}>{str.label}</Text>
+                  <Text style={[styles.strengthLabel, alignStart(), { color: str.color }]}>{str.label}</Text>
                 </View>
               )}
             </View>
@@ -196,7 +201,7 @@ export default function RegisterScreen() {
               render={({ field, fieldState }) => (
                 <FormField
                   ref={confirmRef}
-                  label="Confirm Password" placeholder="Repeat your password" icon="lock-closed-outline"
+                  label={t('auth.confirmPassword')} placeholder={t('auth.repeatPassword')} icon="lock-closed-outline"
                   value={field.value} onChange={field.onChange} onBlur={field.onBlur}
                   error={fieldState.error?.message}
                   secure show={showConfirm} setShow={setShowConfirm}
@@ -222,20 +227,20 @@ export default function RegisterScreen() {
                     <View style={[styles.checkbox, field.value && styles.checkboxOn]}>
                       {!!field.value && <Ionicons name="checkmark" size={15} color="#082926" />}
                     </View>
-                    <Text style={styles.termsText}>
-                      I agree to the{' '}
+                    <Text style={[styles.termsText, alignStart()]}>
+                      {t('auth.agreeTo')}
                       <Text
-                        style={styles.termsLink}
+                        style={[styles.termsLink, alignStart()]}
                         onPress={() =>
                           router.push({ pathname: '/legal/[doc]', params: { doc: 'terms' } })
                         }
                       >
-                        Terms of Use
+                        {t('auth.termsOfUse')}
                       </Text>
                     </Text>
                   </Pressable>
                   {fieldState.error ? (
-                    <Text style={styles.termsError}>{fieldState.error.message}</Text>
+                    <Text style={[styles.termsError, alignStart()]}>{fieldState.error.message}</Text>
                   ) : null}
                 </View>
               )}
@@ -244,7 +249,7 @@ export default function RegisterScreen() {
             {errors.root ? (
               <View style={styles.errorBox}>
                 <Ionicons name="alert-circle" size={16} color="#ef4444" />
-                <Text style={styles.errorText}>{errors.root.message}</Text>
+                <Text style={[styles.errorText, alignStart()]}>{errors.root.message}</Text>
               </View>
             ) : null}
 
@@ -260,14 +265,14 @@ export default function RegisterScreen() {
               {isSubmitting ? (
                 <ActivityIndicator color="#082926" />
               ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
+                <Text style={[styles.buttonText, alignStart()]}>{t('auth.createAccount')}</Text>
               )}
             </Pressable>
 
             <View style={styles.switchRow}>
-              <Text style={styles.switchText}>Already have an account? </Text>
+              <Text style={[styles.switchText, alignStart()]}>{t('auth.haveAccount')}</Text>
               <Pressable onPress={() => router.replace('/(auth)/login')}>
-                <Text style={styles.switchLink}>Sign in</Text>
+                <Text style={[styles.switchLink, alignStart()]}>{t('auth.signInLink')}</Text>
               </Pressable>
             </View>
           </View>
@@ -287,14 +292,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', alignSelf: 'flex-start',
   },
   header: { gap: 6 },
-  title: { fontSize: 32, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
-  subtitle: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  title: { fontSize: 32, fontFamily: FONT.bold, color: '#FFFFFF' },
+  subtitle: { fontSize: 15, fontFamily: FONT.regular, color: '#7fb5ae' },
   form: { gap: 18 },
   fieldGroup: { gap: 8 },
   strengthRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   strengthBar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: '#124038', overflow: 'hidden' },
   strengthFill: { height: '100%', borderRadius: 2 },
-  strengthLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+  strengthLabel: { fontSize: 11, fontFamily: FONT.semibold },
   termsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
   checkbox: {
     width: 22, height: 22, borderRadius: 7,
@@ -303,23 +308,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   checkboxOn: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
-  termsText: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', color: '#7fb5ae', lineHeight: 19 },
-  termsLink: { fontFamily: 'Inter_600SemiBold', color: '#FFFFFF', textDecorationLine: 'underline' },
-  termsError: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#ef4444', marginTop: 6, marginLeft: 32 },
+  termsText: { flex: 1, fontSize: 13, fontFamily: FONT.regular, color: '#7fb5ae', lineHeight: 19 },
+  termsLink: { fontFamily: FONT.semibold, color: '#FFFFFF', textDecorationLine: 'underline' },
+  termsError: { fontSize: 12, fontFamily: FONT.regular, color: '#ef4444', marginTop: 6, marginStart: 32 },
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 12,
     borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
   },
-  errorText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444', flex: 1 },
+  errorText: { fontSize: 13, fontFamily: FONT.regular, color: '#ef4444', flex: 1 },
   button: {
     backgroundColor: '#FFFFFF', borderRadius: 14, paddingVertical: 18,
     alignItems: 'center', marginTop: 4,
   },
   buttonDisabled: { opacity: 0.35 },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  buttonText: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#082926' },
+  buttonText: { fontSize: 17, fontFamily: FONT.bold, color: '#082926' },
   switchRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' },
-  switchText: { fontSize: 14, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
-  switchLink: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF', textDecorationLine: 'underline' },
+  switchText: { fontSize: 14, fontFamily: FONT.regular, color: '#7fb5ae' },
+  switchLink: { fontSize: 14, fontFamily: FONT.semibold, color: '#FFFFFF', textDecorationLine: 'underline' },
 });

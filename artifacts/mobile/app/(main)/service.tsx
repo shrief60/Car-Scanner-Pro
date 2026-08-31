@@ -3,6 +3,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { ServiceMenuScreen } from '@/components/ServiceMenuScreen';
 import { ServicePlaceholder } from '@/components/ServicePlaceholder';
 import { SERVICE_ACTIVITY, SERVICE_INFO } from '@/constants/services';
+import { useLocale } from '@/context/LocaleContext';
+import type { TranslationKey } from '@/i18n';
 
 /**
  * Dispatcher for the six home Services tiles.
@@ -13,11 +15,12 @@ import { SERVICE_ACTIVITY, SERVICE_INFO } from '@/constants/services';
  */
 export default function ServiceScreen() {
   const { service } = useLocalSearchParams<{ service: string }>();
+  const { t } = useLocale();
   const key = service ?? 'maintenance';
   const activity = SERVICE_ACTIVITY[key] ?? null;
 
   if (activity) {
-    const label = SERVICE_INFO[key]?.label ?? 'Services';
+    const label = t((SERVICE_INFO[key]?.labelKey ?? 'home.services') as TranslationKey);
     return <ServiceMenuScreen activity={activity} label={label} />;
   }
 

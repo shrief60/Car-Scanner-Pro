@@ -15,8 +15,13 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { sendOtpChallenge } from '@/services/auth';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { alignStart, ltrIsolate } from '@/lib/direction';
+import { useLocale } from '@/context/LocaleContext';
 
 export default function OtpScreen() {
+  const { t } = useLocale();
   const insets = useSafeAreaInsets();
   const { phone, isNew: isNewParam } =
     useLocalSearchParams<{ phone: string; isNew: string }>();
@@ -65,7 +70,7 @@ export default function OtpScreen() {
       await loginWithOtp(phone ?? '', code, isNew);
       router.replace('/(main)/home');
     } catch (e: unknown) {
-      setError((e as Error).message ?? 'Verification failed');
+      setError((e as Error).message ?? t('otp.verificationFailed'));
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
@@ -81,7 +86,7 @@ export default function OtpScreen() {
       inputs.current[0]?.focus();
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (e: unknown) {
-      setError((e as Error).message ?? 'Failed to resend');
+      setError((e as Error).message ?? t('otp.resendFailed'));
     }
   }
 
@@ -105,13 +110,13 @@ export default function OtpScreen() {
         ]}
       >
         <Pressable style={styles.back} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name={mirrorIcon('arrow-back')} size={24} color="#FFFFFF" />
         </Pressable>
 
         <View style={styles.header}>
-          <Text style={styles.title}>Verification Code</Text>
-          <Text style={styles.subtitle}>We sent a 4-digit code to</Text>
-          <Text style={styles.phone}>{maskedPhone}</Text>
+          <Text style={[styles.title, alignStart()]}>{t('otp.title')}</Text>
+          <Text style={styles.subtitle}>{t('otp.subtitle')}</Text>
+          <Text style={[styles.phone, alignStart()]}>{ltrIsolate(maskedPhone)}</Text>
         </View>
 
         <View style={styles.otpRow}>
@@ -121,7 +126,7 @@ export default function OtpScreen() {
               ref={r => { inputs.current[i] = r; }}
               style={[styles.box, d ? styles.boxFilled : null]}
               value={d}
-              onChangeText={t => handleDigit(t, i)}
+              onChangeText={value => handleDigit(value, i)}
               onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, i)}
               keyboardType="number-pad"
               maxLength={1}
@@ -145,7 +150,7 @@ export default function OtpScreen() {
           {loading ? (
             <ActivityIndicator color="#082926" />
           ) : (
-            <Text style={styles.buttonText}>Confirm</Text>
+            <Text style={[styles.buttonText, alignStart()]}>{t('otp.confirm')}</Text>
           )}
         </Pressable>
 
@@ -154,8 +159,8 @@ export default function OtpScreen() {
           disabled={resendTimer > 0}
           style={styles.resend}
         >
-          <Text style={[styles.resendText, resendTimer > 0 && styles.resendDisabled]}>
-            {resendTimer > 0 ? `Resend code in ${resendTimer}s` : 'Resend code'}
+          <Text style={[styles.resendText, alignStart(), resendTimer > 0 && styles.resendDisabled]}>
+            {resendTimer > 0 ? t('otp.resendIn', { seconds: resendTimer }) : t('otp.resend')}
           </Text>
         </Pressable>
       </View>
@@ -171,26 +176,26 @@ const styles = StyleSheet.create({
     borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.08)',
   },
   header: { marginTop: 48, marginBottom: 48, alignItems: 'center' },
-  title: { fontSize: 28, fontFamily: 'Inter_700Bold', color: '#FFFFFF', marginBottom: 12 },
-  subtitle: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#7fb5ae', textAlign: 'center' },
-  phone: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF', marginTop: 4, letterSpacing: 1 },
+  title: { fontSize: 28, fontFamily: FONT.bold, color: '#FFFFFF', marginBottom: 12 },
+  subtitle: { fontSize: 15, fontFamily: FONT.regular, color: '#7fb5ae', textAlign: 'center' },
+  phone: { fontSize: 16, fontFamily: FONT.semibold, color: '#FFFFFF', marginTop: 4, letterSpacing: 1 },
   otpRow: { flexDirection: 'row', justifyContent: 'center', gap: 14, marginBottom: 24 },
   box: {
     width: 64, height: 72,
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1.5, borderColor: '#1a5048', borderRadius: 16,
-    fontSize: 28, fontFamily: 'Inter_700Bold', color: '#FFFFFF', textAlign: 'center',
+    fontSize: 28, fontFamily: FONT.bold, color: '#FFFFFF', textAlign: 'center',
   },
   boxFilled: { borderColor: '#FFFFFF', backgroundColor: 'rgba(255,255,255,0.14)' },
-  error: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444', textAlign: 'center', marginBottom: 12 },
+  error: { fontSize: 13, fontFamily: FONT.regular, color: '#ef4444', textAlign: 'center', marginBottom: 12 },
   button: {
     backgroundColor: '#FFFFFF', borderRadius: 14, paddingVertical: 18,
     alignItems: 'center', marginTop: 8,
   },
   buttonDisabled: { opacity: 0.35 },
   buttonPressed: { opacity: 0.85 },
-  buttonText: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#082926' },
+  buttonText: { fontSize: 17, fontFamily: FONT.bold, color: '#082926' },
   resend: { marginTop: 24, alignItems: 'center' },
-  resendText: { fontSize: 15, fontFamily: 'Inter_500Medium', color: '#FFFFFF' },
+  resendText: { fontSize: 15, fontFamily: FONT.medium, color: '#FFFFFF' },
   resendDisabled: { color: '#4a8a82' },
 });

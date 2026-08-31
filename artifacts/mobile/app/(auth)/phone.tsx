@@ -15,8 +15,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { sendOtpChallenge } from '@/services/auth';
+import { FONT } from '@/lib/typography';
+import { alignStart, ltrIsolate } from '@/lib/direction';
+import { useLocale } from '@/context/LocaleContext';
 
 export default function PhoneScreen() {
+  const { t } = useLocale();
   const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState('');
   const [isNew, setIsNew] = useState(false); // false = login, true = register
@@ -28,7 +32,7 @@ export default function PhoneScreen() {
 
   async function handleSend() {
     if (!isValid) {
-      setError('Please enter a valid phone number');
+      setError(t('phoneAuth.invalid'));
       return;
     }
     setError('');
@@ -43,7 +47,7 @@ export default function PhoneScreen() {
         params: { phone: fullPhone, isNew: isNew ? '1' : '0' },
       });
     } catch (e: unknown) {
-      setError((e as Error).message ?? 'Failed to send code');
+      setError((e as Error).message ?? t('phoneAuth.sendFailed'));
     } finally {
       setLoading(false);
     }
@@ -77,7 +81,7 @@ export default function PhoneScreen() {
                 resizeMode="cover"
               />
             </View>
-            <Text style={styles.tagline}>Get there in seconds</Text>
+            <Text style={[styles.tagline, alignStart()]}>{t('phoneAuth.tagline')}</Text>
           </View>
 
           {/* Mode toggle */}
@@ -86,39 +90,39 @@ export default function PhoneScreen() {
               style={[styles.modeBtn, !isNew && styles.modeBtnActive]}
               onPress={() => { setIsNew(false); setError(''); }}
             >
-              <Text style={[styles.modeBtnText, !isNew && styles.modeBtnTextActive]}>
-                Sign In
+              <Text style={[styles.modeBtnText, alignStart(), !isNew && styles.modeBtnTextActive]}>
+                {t('phoneAuth.signIn')}
               </Text>
             </Pressable>
             <Pressable
               style={[styles.modeBtn, isNew && styles.modeBtnActive]}
               onPress={() => { setIsNew(true); setError(''); }}
             >
-              <Text style={[styles.modeBtnText, isNew && styles.modeBtnTextActive]}>
-                New Account
+              <Text style={[styles.modeBtnText, alignStart(), isNew && styles.modeBtnTextActive]}>
+                {t('phoneAuth.newAccount')}
               </Text>
             </Pressable>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
-            <Text style={styles.label}>Phone Number</Text>
+            <Text style={[styles.label, alignStart()]}>{t('auth.phoneNumber')}</Text>
             <View style={styles.inputRow}>
               <View style={styles.prefix}>
-                <Text style={styles.prefixText}>+20</Text>
+                <Text style={[styles.prefixText, alignStart()]}>{ltrIsolate('+20')}</Text>
               </View>
               <TextInput
                 style={styles.input}
-                placeholder="10X XXX XXXX"
+                placeholder={t('auth.phonePlaceholder')}
                 placeholderTextColor="#4a8a82"
                 keyboardType="phone-pad"
                 value={phone}
-                onChangeText={t => { setPhone(t); setError(''); }}
+                onChangeText={value => { setPhone(value); setError(''); }}
                 maxLength={14}
                 autoFocus
               />
             </View>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <Text style={[styles.error, alignStart()]}>{error}</Text> : null}
 
             <Pressable
               style={({ pressed }) => [
@@ -132,13 +136,13 @@ export default function PhoneScreen() {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>Send Verification Code</Text>
+                <Text style={[styles.buttonText, alignStart()]}>{t('phoneAuth.send')}</Text>
               )}
             </Pressable>
           </View>
 
           <Text style={styles.note}>
-            We'll send a verification code to your number via SMS
+            {t('phoneAuth.note')}
           </Text>
         </View>
       </KeyboardAvoidingView>
@@ -170,7 +174,7 @@ const styles = StyleSheet.create({
   logoImage: { width: 140, height: 140 },
   tagline: {
     fontSize: 16,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: FONT.regular,
     color: '#7fb5ae',
   },
   modeRow: {
@@ -190,12 +194,12 @@ const styles = StyleSheet.create({
   modeBtnActive: { backgroundColor: '#FFFFFF' },
   modeBtnText: {
     fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: FONT.semibold,
     color: '#7fb5ae',
   },
   modeBtnTextActive: { color: '#082926' },
   form: { gap: 12 },
-  label: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
+  label: { fontSize: 14, fontFamily: FONT.medium, color: '#7fb5ae' },
   inputRow: { flexDirection: 'row', gap: 8 },
   prefix: {
     backgroundColor: 'rgba(255,255,255,0.08)',
@@ -206,7 +210,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  prefixText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
+  prefixText: { fontSize: 16, fontFamily: FONT.semibold, color: '#FFFFFF' },
   input: {
     flex: 1,
     backgroundColor: 'rgba(255,255,255,0.08)',
@@ -216,11 +220,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 16,
     fontSize: 18,
-    fontFamily: 'Inter_500Medium',
+    fontFamily: FONT.medium,
     color: '#FFFFFF',
     letterSpacing: 1,
   },
-  error: { fontSize: 13, fontFamily: 'Inter_400Regular', color: '#ef4444' },
+  error: { fontSize: 13, fontFamily: FONT.regular, color: '#ef4444' },
   button: {
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
@@ -230,10 +234,10 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.4 },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  buttonText: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#082926' },
+  buttonText: { fontSize: 17, fontFamily: FONT.bold, color: '#082926' },
   note: {
     fontSize: 13,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: FONT.regular,
     color: '#4a8a82',
     textAlign: 'center',
     lineHeight: 20,

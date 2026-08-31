@@ -5,6 +5,9 @@ import { RemoteImage } from '@/components/RemoteImage';
 import { Skeleton } from '@/components/Skeleton';
 import { formatDuration, formatPrice } from '@/lib/format';
 import type { MenuItem, MerchantRef } from '@/types/merchants';
+import { FONT } from '@/lib/typography';
+import { useLocale } from '@/context/LocaleContext';
+import { alignStart } from '@/lib/direction';
 
 /**
  * Fixed height, on purpose — it is what makes `getItemLayout` possible on the list.
@@ -26,6 +29,7 @@ export function MenuItemCard({
   merchant?: MerchantRef;
   onPress: () => void;
 }) {
+  const { t } = useLocale();
   const duration = formatDuration(item.duration_minutes);
 
   return (
@@ -48,35 +52,35 @@ export function MenuItemCard({
       />
 
       <View style={styles.body}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={[styles.name, alignStart()]} numberOfLines={1}>
           {item.name}
         </Text>
 
         {merchant ? (
           <View style={styles.metaRow}>
             <Ionicons name="storefront-outline" size={12} color="#7fb5ae" />
-            <Text style={styles.merchant} numberOfLines={1}>
+            <Text style={[styles.merchant, alignStart()]} numberOfLines={1}>
               {merchant.shop_name}
             </Text>
           </View>
         ) : (
-          <Text style={styles.merchant} numberOfLines={1}>
-            {item.category ?? 'Service'}
+          <Text style={[styles.merchant, alignStart()]} numberOfLines={1}>
+            {item.category ?? t('serviceBrowser.service')}
           </Text>
         )}
 
         <View style={styles.bottomRow}>
-          <Text style={styles.price} numberOfLines={1}>
+          <Text style={[styles.price, alignStart()]} numberOfLines={1}>
             {formatPrice(item.price, item.currency)}
           </Text>
           {!item.is_available ? (
             <View style={styles.pill}>
-              <Text style={styles.pillText}>Unavailable</Text>
+              <Text style={[styles.pillText, alignStart()]}>{t('serviceBrowser.unavailable')}</Text>
             </View>
           ) : duration ? (
             <View style={styles.metaRow}>
               <Ionicons name="time-outline" size={12} color="#7fb5ae" />
-              <Text style={styles.duration}>{duration}</Text>
+              <Text style={[styles.duration, alignStart()]}>{duration}</Text>
             </View>
           ) : null}
         </View>
@@ -114,9 +118,9 @@ const styles = StyleSheet.create({
   cardDisabled: { opacity: 0.55 },
   cardPressed: { opacity: 0.78, transform: [{ scale: 0.985 }] },
   body: { flex: 1, justifyContent: 'center' },
-  name: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
+  name: { fontSize: 15, fontFamily: FONT.semibold, color: '#FFFFFF' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  merchant: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#7fb5ae', marginTop: 3, flex: 1 },
+  merchant: { fontSize: 12, fontFamily: FONT.regular, color: '#7fb5ae', marginTop: 3, flex: 1 },
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -124,13 +128,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     gap: 8,
   },
-  price: { fontSize: 14, fontFamily: 'Inter_700Bold', color: '#4ade80' },
-  duration: { fontSize: 11, fontFamily: 'Inter_400Regular', color: '#7fb5ae' },
+  price: { fontSize: 14, fontFamily: FONT.bold, color: '#4ade80' },
+  duration: { fontSize: 11, fontFamily: FONT.regular, color: '#7fb5ae' },
   pill: {
     backgroundColor: 'rgba(239,68,68,0.12)',
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  pillText: { fontSize: 10, fontFamily: 'Inter_500Medium', color: '#ef4444' },
+  pillText: { fontSize: 10, fontFamily: FONT.medium, color: '#ef4444' },
 });

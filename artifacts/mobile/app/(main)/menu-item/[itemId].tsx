@@ -9,6 +9,10 @@ import { Skeleton } from '@/components/Skeleton';
 import { useMenuItem } from '@/hooks/useMerchants';
 import { formatDuration, formatPrice, humanizeActivity } from '@/lib/format';
 import type { ActivityType } from '@/types/merchants';
+import { FONT } from '@/lib/typography';
+import { mirrorIcon } from '@/lib/rtl';
+import { useLocale } from '@/context/LocaleContext';
+import { alignStart } from '@/lib/direction';
 
 /**
  * Item detail.
@@ -19,6 +23,7 @@ import type { ActivityType } from '@/types/merchants';
  */
 export default function MenuItemScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useLocale();
   const params = useLocalSearchParams<{ itemId: string; merchantId: string; activity?: string }>();
   // Coerce at the boundary — params are strings, query keys are numbers.
   const itemId = Number(params.itemId);
@@ -60,7 +65,7 @@ export default function MenuItemScreen() {
             ]}
             onPress={() => router.back()}
           >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name={mirrorIcon('arrow-back')} size={24} color="#FFFFFF" />
           </Pressable>
         </View>
 
@@ -78,32 +83,32 @@ export default function MenuItemScreen() {
           ) : item ? (
             <>
               <View style={styles.titleRow}>
-                <Text style={styles.name}>{item.name}</Text>
+                <Text style={[styles.name, alignStart()]}>{item.name}</Text>
                 {!item.is_available && (
                   <View style={styles.pill}>
-                    <Text style={styles.pillText}>Unavailable</Text>
+                    <Text style={[styles.pillText, alignStart()]}>{t('serviceBrowser.unavailable')}</Text>
                   </View>
                 )}
               </View>
 
-              <Text style={styles.price}>{formatPrice(item.price, item.currency)}</Text>
+              <Text style={[styles.price, alignStart()]}>{formatPrice(item.price, item.currency)}</Text>
 
               <View style={styles.chips}>
                 {!!item.category && (
                   <View style={styles.chip}>
                     <Ionicons name="pricetag-outline" size={13} color="#7fb5ae" />
-                    <Text style={styles.chipText}>{item.category}</Text>
+                    <Text style={[styles.chipText, alignStart()]}>{item.category}</Text>
                   </View>
                 )}
                 {!!duration && (
                   <View style={styles.chip}>
                     <Ionicons name="time-outline" size={13} color="#7fb5ae" />
-                    <Text style={styles.chipText}>{duration}</Text>
+                    <Text style={[styles.chipText, alignStart()]}>{duration}</Text>
                   </View>
                 )}
               </View>
 
-              {!!item.description && <Text style={styles.description}>{item.description}</Text>}
+              {!!item.description && <Text style={[styles.description, alignStart()]}>{item.description}</Text>}
 
               <Pressable
                 style={({ pressed }) => [styles.shopRow, pressed && { opacity: 0.8 }]}
@@ -118,14 +123,14 @@ export default function MenuItemScreen() {
                   <Ionicons name="storefront-outline" size={22} color="#7fb5ae" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.shopName} numberOfLines={1}>
+                  <Text style={[styles.shopName, alignStart()]} numberOfLines={1}>
                     {item.merchant.shop_name}
                   </Text>
-                  <Text style={styles.shopMeta}>
-                    {humanizeActivity(item.merchant.activity_type)} · View all services
+                  <Text style={[styles.shopMeta, alignStart()]}>
+                    {humanizeActivity(item.merchant.activity_type)} · {t('serviceBrowser.viewAllServices')}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#7fb5ae" />
+                <Ionicons name={mirrorIcon('chevron-forward')} size={20} color="#7fb5ae" />
               </Pressable>
             </>
           ) : null}
@@ -141,7 +146,7 @@ const styles = StyleSheet.create({
   heroImage: { width: '100%', height: 260, borderWidth: 0, borderRadius: 0 },
   backBtn: {
     position: 'absolute',
-    left: 16,
+    start: 16,
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -151,8 +156,8 @@ const styles = StyleSheet.create({
   },
   body: { padding: 20, gap: 0 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  name: { flex: 1, fontSize: 24, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
-  price: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#4ade80', marginTop: 8 },
+  name: { flex: 1, fontSize: 24, fontFamily: FONT.bold, color: '#FFFFFF' },
+  price: { fontSize: 20, fontFamily: FONT.bold, color: '#4ade80', marginTop: 8 },
   chips: { flexDirection: 'row', gap: 8, marginTop: 14, flexWrap: 'wrap' },
   chip: {
     flexDirection: 'row',
@@ -163,10 +168,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 6,
   },
-  chipText: { fontSize: 12, fontFamily: 'Inter_500Medium', color: '#7fb5ae' },
+  chipText: { fontSize: 12, fontFamily: FONT.medium, color: '#7fb5ae' },
   description: {
     fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: FONT.regular,
     color: '#7fb5ae',
     lineHeight: 22,
     marginTop: 18,
@@ -177,7 +182,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  pillText: { fontSize: 11, fontFamily: 'Inter_500Medium', color: '#ef4444' },
+  pillText: { fontSize: 11, fontFamily: FONT.medium, color: '#ef4444' },
   shopRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -197,6 +202,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  shopName: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF' },
-  shopMeta: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#7fb5ae', marginTop: 3 },
+  shopName: { fontSize: 15, fontFamily: FONT.semibold, color: '#FFFFFF' },
+  shopMeta: { fontSize: 12, fontFamily: FONT.regular, color: '#7fb5ae', marginTop: 3 },
 });

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { FONT } from '@/lib/typography';
+import { alignStart } from '@/lib/direction';
 
 /**
  * Two-way segmented control. Lifted from the Sign In / New Account switch in
@@ -31,7 +33,7 @@ export function SegmentedTabs<T extends string>({
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
           >
-            <Text style={[styles.text, active && styles.textActive]}>{option.label}</Text>
+            <Text style={[styles.text, alignStart(), active && styles.textActive]}>{option.label}</Text>
           </Pressable>
         );
       })}
@@ -50,6 +52,6 @@ const styles = StyleSheet.create({
   },
   btn: { flex: 1, paddingVertical: 10, borderRadius: 9, alignItems: 'center' },
   btnActive: { backgroundColor: '#FFFFFF' },
-  text: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#7fb5ae' },
+  text: { fontSize: 14, fontFamily: FONT.semibold, color: '#7fb5ae' },
   textActive: { color: '#082926' },
 });

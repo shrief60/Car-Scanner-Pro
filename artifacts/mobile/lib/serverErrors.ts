@@ -1,4 +1,5 @@
 import type { FieldValues, Path, UseFormSetError } from 'react-hook-form';
+import { t } from '@/i18n';
 
 type LaravelError = Error & {
   details?: { errors?: Record<string, string[] | string>; message?: string };
@@ -25,7 +26,7 @@ export function applyServerErrors<T extends FieldValues>(
   const serverErrors = e.details?.errors;
 
   if (!serverErrors || typeof serverErrors !== 'object') {
-    setError('root', { message: e.message || 'Something went wrong' });
+    setError('root', { message: e.message || t('common.somethingWentWrong') });
     return;
   }
 
@@ -44,5 +45,5 @@ export function applyServerErrors<T extends FieldValues>(
   }
 
   if (leftovers.length) setError('root', { message: leftovers.join('\n') });
-  else if (matched === 0) setError('root', { message: e.message || 'Something went wrong' });
+  else if (matched === 0) setError('root', { message: e.message || t('common.somethingWentWrong') });
 }

@@ -48,7 +48,9 @@
           "photosPermission": "Qar needs access to your photos to attach a car image",
           "cameraPermission": "Qar needs camera access to take a photo of your car"
         }
-      ]
+      ],
+      "expo-localization",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
