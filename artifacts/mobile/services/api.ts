@@ -5,6 +5,8 @@
  * AuthContext calls setToken() after login/logout.
  */
 
+import { getActiveLocale } from '@/i18n';
+
 export const BASE_URL = 'https://qar-4uh5.onrender.com';
 
 let _token: string | null = null;
@@ -29,7 +31,13 @@ async function request<T>(
 ): Promise<T> {
   const { body, auth = true } = opts;
 
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  // Every request carries the app's language so the backend can localise its own
+  // content (activity labels, package names, menu item names). Read per-request, not
+  // captured at module scope — the value is only known after the locale resolves.
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    locale: getActiveLocale(),
+  };
 
   if (auth && _token) {
     headers['Authorization'] = `Bearer ${_token}`;

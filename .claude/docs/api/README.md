@@ -164,6 +164,9 @@ Audited against `artifacts/mobile/services/`. Keep this current when you wire so
 | `POST /api/scan/{qrCode}/alerts` | `sendAlert` | `scan/[id].tsx` |
 | `GET /api/packages` | `listPackages` | `(main)/packages.tsx` |
 | `POST /api/subscriptions` | `subscribe` | `(main)/packages.tsx` |
+| `GET /api/merchants` | `listMerchants` | `(main)/service.tsx` — Merchants tab |
+| `GET /api/menu-items` | `listMenuItems` | `(main)/service.tsx` — Menu tab |
+| `GET /api/merchants/{id}/menu` | `getMerchantMenu` | `(main)/merchant/[merchantId].tsx` |
 
 **Built but unreachable** — code exists, no user can get to it:
 

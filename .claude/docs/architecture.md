@@ -115,7 +115,7 @@ The founder's originals. Two are stale or hard to find, so **prefer `.claude/`**
 
 | File | Status |
 | --- | --- |
-| `Pasted--info-name-Qar-API-*.txt` | ⚠️ **STALE** — 32 endpoints in 9 groups. Missing the entire Google and Merchant-menu groups. Use `.claude/reference/Qar.postman_collection.json` (41 endpoints) instead. |
+| `Pasted--info-name-Qar-API-*.txt` | ⚠️ **STALE** — 32 endpoints in 9 groups. Missing the entire Google and Merchant-menu groups. Use `.claude/reference/Qar.postman_collection.json` (43 endpoints) instead. |
 | `Pasted-contract-*.txt` | The Google-auth contract note. Its content is folded into [api/README.md](api/README.md). Truncated mid-sentence in the original. |
 | `Qar-htwsl-fa-thwana_*_compressed.pdf` | Compressed copy of the Canva spec deck. Summarised in [product.md](product.md). |
 | `generated_images/qar-icon.png` | The app icon. |

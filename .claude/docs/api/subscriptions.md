@@ -24,6 +24,7 @@ Headers: `Accept: application/json`
     "name": "Monthly",
     "slug": "monthly",
     "period": "monthly",
+    "period_label": "Monthly",
     "duration_months": 1,
     "price": "99.00",
     "currency": "EGP",
@@ -34,6 +35,7 @@ Headers: `Accept: application/json`
     "name": "6 Months",
     "slug": "semi-annual",
     "period": "semi_annual",
+    "period_label": "Every 6 months",
     "duration_months": 6,
     "price": "499.00",
     "currency": "EGP",
@@ -44,6 +46,7 @@ Headers: `Accept: application/json`
     "name": "Yearly",
     "slug": "annual",
     "period": "annual",
+    "period_label": "Yearly",
     "duration_months": 12,
     "price": "899.00",
     "currency": "EGP",
@@ -78,20 +81,23 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
   "subscription": {
     "id": 1,
     "status": "pending",
+    "status_label": "Pending",
     "is_active": false,
     "period": "monthly",
+    "period_label": "Monthly",
     "duration_months": 1,
     "price": "99.00",
     "currency": "EGP",
     "starts_at": null,
     "ends_at": null,
     "cancelled_at": null,
-    "created_at": "2026-08-29T15:20:23.000000Z",
+    "created_at": "2026-08-31T15:55:05.000000Z",
     "package": {
       "id": 1,
       "name": "Monthly",
       "slug": "monthly",
       "period": "monthly",
+      "period_label": "Monthly",
       "duration_months": 1,
       "price": "99.00",
       "currency": "EGP",
@@ -101,19 +107,21 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
       {
         "id": 1,
         "method": "cash",
+        "method_label": "Cash",
         "status": "pending",
+        "status_label": "Pending",
         "amount": "99.00",
         "currency": "EGP",
-        "reference": "QAR-4GDUTBUCKBZWQQYDNXHZ",
+        "reference": "QAR-9CKPWLYGJFVOGCZSY09Y",
         "paid_at": null,
-        "created_at": "2026-08-29T15:20:23.000000Z"
+        "created_at": "2026-08-31T15:55:05.000000Z"
       }
     ]
   },
   "payment": {
     "method": "cash",
     "status": "pending",
-    "reference": "QAR-4GDUTBUCKBZWQQYDNXHZ",
+    "reference": "QAR-9CKPWLYGJFVOGCZSY09Y",
     "requires_redirect": false,
     "checkout_url": null,
     "message": "Your subscription will be activated once your cash payment is confirmed."
@@ -145,20 +153,23 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
   "subscription": {
     "id": 2,
     "status": "pending",
+    "status_label": "Pending",
     "is_active": false,
     "period": "monthly",
+    "period_label": "Monthly",
     "duration_months": 1,
     "price": "99.00",
     "currency": "EGP",
     "starts_at": null,
     "ends_at": null,
     "cancelled_at": null,
-    "created_at": "2026-08-29T15:20:23.000000Z",
+    "created_at": "2026-08-31T15:55:05.000000Z",
     "package": {
       "id": 1,
       "name": "Monthly",
       "slug": "monthly",
       "period": "monthly",
+      "period_label": "Monthly",
       "duration_months": 1,
       "price": "99.00",
       "currency": "EGP",
@@ -168,21 +179,23 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
       {
         "id": 2,
         "method": "paymob",
+        "method_label": "Paymob",
         "status": "pending",
+        "status_label": "Pending",
         "amount": "99.00",
         "currency": "EGP",
-        "reference": "QAR-TDH1YH9NL799OQRTZ7NS",
+        "reference": "QAR-FS73GRG3N5BADILANLSD",
         "paid_at": null,
-        "created_at": "2026-08-29T15:20:23.000000Z"
+        "created_at": "2026-08-31T15:55:05.000000Z"
       }
     ]
   },
   "payment": {
     "method": "paymob",
     "status": "pending",
-    "reference": "QAR-TDH1YH9NL799OQRTZ7NS",
+    "reference": "QAR-FS73GRG3N5BADILANLSD",
     "requires_redirect": true,
-    "checkout_url": "https://accept.paymob.com/unifiedcheckout/?publicKey=&clientSecret=fake_QAR-TDH1YH9NL799OQRTZ7NS",
+    "checkout_url": "https://accept.paymob.com/unifiedcheckout/?publicKey=&clientSecret=fake_QAR-FS73GRG3N5BADILANLSD",
     "message": "Paymob is running in fake mode; no real charge will occur."
   }
 }
@@ -201,20 +214,23 @@ Headers: `Accept: application/json`
   {
     "id": 1,
     "status": "pending",
+    "status_label": "Pending",
     "is_active": false,
     "period": "monthly",
+    "period_label": "Monthly",
     "duration_months": 1,
     "price": "99.00",
     "currency": "EGP",
     "starts_at": null,
     "ends_at": null,
     "cancelled_at": null,
-    "created_at": "2026-08-29T15:20:23.000000Z",
+    "created_at": "2026-08-31T15:55:05.000000Z",
     "package": {
       "id": 1,
       "name": "Monthly",
       "slug": "monthly",
       "period": "monthly",
+      "period_label": "Monthly",
       "duration_months": 1,
       "price": "99.00",
       "currency": "EGP",
@@ -224,12 +240,14 @@ Headers: `Accept: application/json`
       {
         "id": 1,
         "method": "cash",
+        "method_label": "Cash",
         "status": "pending",
+        "status_label": "Pending",
         "amount": "99.00",
         "currency": "EGP",
-        "reference": "QAR-4GDUTBUCKBZWQQYDNXHZ",
+        "reference": "QAR-9CKPWLYGJFVOGCZSY09Y",
         "paid_at": null,
-        "created_at": "2026-08-29T15:20:23.000000Z"
+        "created_at": "2026-08-31T15:55:05.000000Z"
       }
     ]
   }
@@ -248,20 +266,23 @@ Headers: `Accept: application/json`
 {
   "id": 1,
   "status": "pending",
+  "status_label": "Pending",
   "is_active": false,
   "period": "monthly",
+  "period_label": "Monthly",
   "duration_months": 1,
   "price": "99.00",
   "currency": "EGP",
   "starts_at": null,
   "ends_at": null,
   "cancelled_at": null,
-  "created_at": "2026-08-29T15:20:23.000000Z",
+  "created_at": "2026-08-31T15:55:05.000000Z",
   "package": {
     "id": 1,
     "name": "Monthly",
     "slug": "monthly",
     "period": "monthly",
+    "period_label": "Monthly",
     "duration_months": 1,
     "price": "99.00",
     "currency": "EGP",
@@ -271,12 +292,14 @@ Headers: `Accept: application/json`
     {
       "id": 1,
       "method": "cash",
+      "method_label": "Cash",
       "status": "pending",
+      "status_label": "Pending",
       "amount": "99.00",
       "currency": "EGP",
-      "reference": "QAR-4GDUTBUCKBZWQQYDNXHZ",
+      "reference": "QAR-9CKPWLYGJFVOGCZSY09Y",
       "paid_at": null,
-      "created_at": "2026-08-29T15:20:23.000000Z"
+      "created_at": "2026-08-31T15:55:05.000000Z"
     }
   ]
 }

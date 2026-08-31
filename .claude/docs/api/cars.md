@@ -34,10 +34,10 @@ Headers: `Accept: application/json`
   "make": "Kia",
   "model": "Sportage",
   "color": "Black",
-  "photo_url": "https://qar-4uh5.onrender.com/storage/cars/ZIKwlEXAx8XRdDJATjllXIGrGndXD93bxm7V32JX.jpg",
-  "qr_code": "QAR-PCYJRHWRN0",
-  "qr_url": "https://qar-4uh5.onrender.com/storage/qr/QAR-PCYJRHWRN0.svg",
-  "created_at": "2026-08-29T15:20:23.000000Z"
+  "photo_url": "https://qar-4uh5.onrender.com/storage/cars/eQqlqYpgFVWO4dR2YaFmUPPy8Aok8Zxd1SR3EC50.jpg",
+  "qr_code": "QAR-JEYUXHJG09",
+  "qr_url": "https://qar-4uh5.onrender.com/storage/qr/QAR-JEYUXHJG09.svg",
+  "created_at": "2026-08-31T15:55:05.000000Z"
 }
 ```
 
@@ -70,10 +70,10 @@ Headers: `Accept: application/json`
     "make": "Kia",
     "model": "Sportage",
     "color": "Black",
-    "photo_url": "https://qar-4uh5.onrender.com/storage/cars/ZIKwlEXAx8XRdDJATjllXIGrGndXD93bxm7V32JX.jpg",
-    "qr_code": "QAR-PCYJRHWRN0",
-    "qr_url": "https://qar-4uh5.onrender.com/storage/qr/QAR-PCYJRHWRN0.svg",
-    "created_at": "2026-08-29T15:20:23.000000Z"
+    "photo_url": "https://qar-4uh5.onrender.com/storage/cars/eQqlqYpgFVWO4dR2YaFmUPPy8Aok8Zxd1SR3EC50.jpg",
+    "qr_code": "QAR-JEYUXHJG09",
+    "qr_url": "https://qar-4uh5.onrender.com/storage/qr/QAR-JEYUXHJG09.svg",
+    "created_at": "2026-08-31T15:55:05.000000Z"
   }
 ]
 ```
@@ -101,10 +101,10 @@ Headers: `Accept: application/json`
   "make": "Kia",
   "model": "Sportage",
   "color": "Black",
-  "photo_url": "https://qar-4uh5.onrender.com/storage/cars/ZIKwlEXAx8XRdDJATjllXIGrGndXD93bxm7V32JX.jpg",
-  "qr_code": "QAR-PCYJRHWRN0",
-  "qr_url": "https://qar-4uh5.onrender.com/storage/qr/QAR-PCYJRHWRN0.svg",
-  "created_at": "2026-08-29T15:20:23.000000Z"
+  "photo_url": "https://qar-4uh5.onrender.com/storage/cars/eQqlqYpgFVWO4dR2YaFmUPPy8Aok8Zxd1SR3EC50.jpg",
+  "qr_code": "QAR-JEYUXHJG09",
+  "qr_url": "https://qar-4uh5.onrender.com/storage/qr/QAR-JEYUXHJG09.svg",
+  "created_at": "2026-08-31T15:55:05.000000Z"
 }
 ```
 

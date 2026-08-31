@@ -48,7 +48,7 @@ export function ServiceMenuScreen({
   const feed = useMenuItemsFeed(activity);
   const merchants = useMerchants(activity);
 
-  const items = feed.data?.pages.flatMap(p => p.items) ?? [];
+  const items = feed.data ?? [];
   const merchantList = merchants.data ?? [];
 
   const listPad = {
@@ -120,15 +120,7 @@ export function ServiceMenuScreen({
           showsVerticalScrollIndicator={false}
           initialNumToRender={6}
           removeClippedSubviews={false}
-          refreshControl={refreshControl(
-            feed.isRefetching && !feed.isFetchingNextPage,
-            feed.refetch,
-          )}
-          onEndReachedThreshold={0.5}
-          onEndReached={() => {
-            // Fires on mount with empty data — guard, or it thrashes.
-            if (feed.hasNextPage && !feed.isFetchingNextPage) feed.fetchNextPage();
-          }}
+          refreshControl={refreshControl(feed.isRefetching, feed.refetch)}
           ListHeaderComponent={
             feed.error ? (
               <View style={{ marginBottom: LIST_GAP }}>
@@ -150,13 +142,6 @@ export function ServiceMenuScreen({
                 subtitle={t((EMPTY_MENU_KEY[activity] ?? 'serviceBrowser.noServicesTitle') as TranslationKey)}
               />
             )
-          }
-          ListFooterComponent={
-            feed.isFetchingNextPage ? (
-              <View style={{ marginTop: LIST_GAP }}>
-                <MenuItemCardSkeleton />
-              </View>
-            ) : null
           }
         />
       ) : (

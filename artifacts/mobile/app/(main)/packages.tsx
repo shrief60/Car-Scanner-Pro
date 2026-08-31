@@ -37,12 +37,6 @@ import type { TranslationKey } from '@/i18n';
  * straight to Home, so this screen is only ever reachable from the signup flow.
  */
 
-const PERIOD_LABEL: Record<string, TranslationKey> = {
-  monthly: 'packages.perMonth',
-  semi_annual: 'packages.perSemiAnnual',
-  annual: 'packages.perAnnual',
-};
-
 const METHODS: { value: PaymentMethod; label: TranslationKey; hint: TranslationKey; icon: string }[] = [
   { value: 'cash', label: 'packages.cash', hint: 'packages.cashHint', icon: 'cash-outline' },
   { value: 'paymob', label: 'packages.online', hint: 'packages.onlineHint', icon: 'card-outline' },
@@ -97,8 +91,9 @@ function PackageCard({
         <Text style={styles.price} numberOfLines={1}>
           {formatPrice(pkg.price, pkg.currency)}
         </Text>
+        {/* Straight off the response — the API renders this label itself. */}
         <Text style={styles.cadence} numberOfLines={1}>
-          {t(PERIOD_LABEL[pkg.period] ?? 'packages.perMonth')}
+          {pkg.period_label}
         </Text>
       </View>
     </Pressable>

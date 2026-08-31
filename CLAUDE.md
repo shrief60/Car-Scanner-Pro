@@ -53,7 +53,7 @@ is wired for API/log inspection (`reactotron.config.ts`); it needs the desktop a
 - **`GET /api/scan/{qrCode}` returns a nested shape** that `services/scan.ts` types
   incorrectly, so the scan result screen renders blank. See `.claude/docs/known-issues.md`.
 - **`attached_assets/Pasted--info-name-Qar-API-*.txt` is a stale 32-endpoint export.**
-  The current one is 41 endpoints in `.claude/reference/`.
+  The current one is 43 endpoints in `.claude/reference/`.
 - Responses are **never** wrapped in `data`; money is a string (`"99.00"`) with a
   separate `currency`.
 
@@ -61,7 +61,7 @@ is wired for API/log inspection (`reactotron.config.ts`); it needs the desktop a
 
 | | |
 | --- | --- |
-| `.claude/docs/api/README.md` | API conventions, auth model, error envelopes, and which endpoints the app actually calls. Indexes the 41-endpoint reference. |
+| `.claude/docs/api/README.md` | API conventions, auth model, error envelopes, and which endpoints the app actually calls. Indexes the 43-endpoint reference. |
 | `.claude/docs/design-system.md` | **Read before building any new screen.** Colours, type scale, spacing, component recipes, and a new-screen checklist. |
 | `.claude/docs/architecture.md` | Repo map, routes, state/auth handling, theme. |
 | `.claude/docs/product.md` | What Qar is: privacy model, tiers, merchant side, and where the spec diverges from what was built. |

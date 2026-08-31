@@ -76,7 +76,7 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
     "has_password": false,
     "phone_verified": true,
     "email_verified": false,
-    "created_at": "2026-08-29T15:19:13.000000Z"
+    "created_at": "2026-08-31T15:53:55.000000Z"
   }
 }
 ```
@@ -147,7 +147,7 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
     "has_password": false,
     "phone_verified": true,
     "email_verified": false,
-    "created_at": "2026-08-29T15:19:13.000000Z"
+    "created_at": "2026-08-31T15:53:55.000000Z"
   }
 }
 ```
@@ -240,7 +240,7 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
     "has_password": true,
     "phone_verified": false,
     "email_verified": false,
-    "created_at": "2026-08-29T15:19:48.000000Z"
+    "created_at": "2026-08-31T15:54:30.000000Z"
   }
 }
 ```
@@ -306,7 +306,7 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
     "has_password": true,
     "phone_verified": false,
     "email_verified": false,
-    "created_at": "2026-08-29T15:19:48.000000Z"
+    "created_at": "2026-08-31T15:54:30.000000Z"
   }
 }
 ```
@@ -390,7 +390,7 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
     "has_password": true,
     "phone_verified": false,
     "email_verified": false,
-    "created_at": "2026-08-29T15:19:48.000000Z"
+    "created_at": "2026-08-31T15:54:30.000000Z"
   }
 }
 ```
@@ -441,7 +441,7 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
     "has_password": false,
     "phone_verified": false,
     "email_verified": true,
-    "created_at": "2026-08-29T15:20:23.000000Z"
+    "created_at": "2026-08-31T15:55:05.000000Z"
   }
 }
 ```
@@ -473,7 +473,7 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
     "has_password": false,
     "phone_verified": false,
     "email_verified": true,
-    "created_at": "2026-08-29T15:20:23.000000Z"
+    "created_at": "2026-08-31T15:55:05.000000Z"
   }
 }
 ```
@@ -522,7 +522,7 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
     "has_password": false,
     "phone_verified": false,
     "email_verified": true,
-    "created_at": "2026-08-29T15:20:23.000000Z"
+    "created_at": "2026-08-31T15:55:05.000000Z"
   }
 }
 ```
@@ -576,7 +576,7 @@ Headers: `Accept: application/json`
   "has_password": true,
   "phone_verified": true,
   "email_verified": false,
-  "created_at": "2026-08-29T15:20:23.000000Z"
+  "created_at": "2026-08-31T15:55:05.000000Z"
 }
 ```
 
@@ -631,7 +631,7 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
     "has_password": true,
     "phone_verified": true,
     "email_verified": false,
-    "created_at": "2026-08-29T15:20:23.000000Z"
+    "created_at": "2026-08-31T15:55:05.000000Z"
   }
 }
 ```
@@ -738,13 +738,13 @@ Headers: `Accept: application/json`
   "name": "Salma Farid",
   "phone": "+201000000021",
   "email": "salma@example.com",
-  "phone_verified_at": "2026-08-29T15:20:23.000000Z",
+  "phone_verified_at": "2026-08-31T15:55:05.000000Z",
   "email_verified_at": null,
   "active_mode": "client",
   "locale": "ar",
   "is_active": true,
-  "created_at": "2026-08-29T15:20:23.000000Z",
-  "updated_at": "2026-08-29T15:20:23.000000Z",
+  "created_at": "2026-08-31T15:55:05.000000Z",
+  "updated_at": "2026-08-31T15:55:05.000000Z",
   "date_of_birth": null
 }
 ```

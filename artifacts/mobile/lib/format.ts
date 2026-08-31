@@ -28,16 +28,6 @@ export function formatDuration(minutes: number | null | undefined): string | nul
   return rest ? `${hours} ${hr} ${rest} ${min}` : `${hours} ${hr}`;
 }
 
-/**
- * "car_wash" -> "Car wash" / "غسيل سيارات".
- *
- * Was string surgery on the API slug, which produced English that could not be
- * translated. Now a keyed lookup; an unknown slug falls back to `activity.other`.
- */
-export function humanizeActivity(activity: string): string {
-  const known = ['car_wash', 'maintenance', 'fuel_station', 'accessories', 'other'];
-  return t(`activity.${known.includes(activity) ? activity : 'other'}` as TranslationKey);
-}
 
 /**
  * "2026-07-04T…" -> "July 2026" / "يوليو 2026".

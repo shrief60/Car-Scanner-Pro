@@ -32,12 +32,13 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
 {
   "id": 1,
   "status": "pending",
+  "status_label": "Pending",
   "quantity": 2,
   "shipping_address": "12 Tahrir St, Cairo",
   "notes": "Please ship before the weekend.",
   "ready_at": null,
   "delivered_at": null,
-  "created_at": "2026-08-29T15:20:23.000000Z",
+  "created_at": "2026-08-31T15:55:05.000000Z",
   "car": {
     "id": 4,
     "plate_number": "ABC 1234",
@@ -69,12 +70,13 @@ Headers: `Accept: application/json`
   {
     "id": 1,
     "status": "pending",
+    "status_label": "Pending",
     "quantity": 2,
     "shipping_address": "12 Tahrir St, Cairo",
     "notes": "Please ship before the weekend.",
     "ready_at": null,
     "delivered_at": null,
-    "created_at": "2026-08-29T15:20:23.000000Z",
+    "created_at": "2026-08-31T15:55:05.000000Z",
     "car": {
       "id": 4,
       "plate_number": "ABC 1234",
@@ -97,12 +99,13 @@ Headers: `Accept: application/json`
 {
   "id": 1,
   "status": "pending",
+  "status_label": "Pending",
   "quantity": 2,
   "shipping_address": "12 Tahrir St, Cairo",
   "notes": "Please ship before the weekend.",
   "ready_at": null,
   "delivered_at": null,
-  "created_at": "2026-08-29T15:20:23.000000Z",
+  "created_at": "2026-08-31T15:55:05.000000Z",
   "car": {
     "id": 4,
     "plate_number": "ABC 1234",

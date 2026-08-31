@@ -28,8 +28,8 @@ WARNING = "<!-- Everything between these markers is produced by .claude/tools/ge
 
 # Expected totals. A mismatch means the collection changed shape — fail loudly
 # rather than silently emitting a partial reference.
-EXPECT_ENDPOINTS = 41
-EXPECT_RESPONSES = 52
+EXPECT_ENDPOINTS = 43
+EXPECT_RESPONSES = 54
 
 # Postman folder name -> output file. Several folders share one file.
 GROUP_FILE = {
@@ -42,6 +42,7 @@ GROUP_FILE = {
     "Print requests (client)": "print-requests.md",
     "Packages (public)": "subscriptions.md",
     "Subscriptions (client)": "subscriptions.md",
+    "Merchants (client)": "merchant-menu.md",
     "Merchant menu": "merchant-menu.md",
     "Payments (webhook)": "payments.md",
 }

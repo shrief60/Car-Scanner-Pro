@@ -8,7 +8,6 @@ import { MenuItemCard, MenuItemCardSkeleton, LIST_GAP, MENU_ITEM_HEIGHT } from '
 import { RemoteImage } from '@/components/RemoteImage';
 import { Skeleton } from '@/components/Skeleton';
 import { useMerchantMenu } from '@/hooks/useMerchants';
-import { humanizeActivity } from '@/lib/format';
 import type { MenuItem } from '@/types/merchants';
 import { FONT } from '@/lib/typography';
 import { mirrorIcon } from '@/lib/rtl';
@@ -65,8 +64,8 @@ export default function MerchantMenuScreen() {
                 {data?.merchant.shop_name}
               </Text>
               <Text style={[styles.shopMeta, alignStart()]} numberOfLines={1}>
-                {data ? humanizeActivity(data.merchant.activity_type) : ''}
-                {items.length ? ` · ${items.length} services` : ''}
+                {data?.merchant.activity_type_label ?? ''}
+                {items.length ? ` · ${items.length} ${t('serviceBrowser.servicesCount')}` : ''}
               </Text>
             </View>
           </>

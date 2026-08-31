@@ -3,11 +3,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { RemoteImage } from '@/components/RemoteImage';
 import { Skeleton } from '@/components/Skeleton';
-import { humanizeActivity } from '@/lib/format';
 import type { Merchant } from '@/types/merchants';
 import { FONT } from '@/lib/typography';
 import { mirrorIcon } from '@/lib/rtl';
-import { alignStart } from '@/lib/direction';
+import { alignStart, autoIsolate } from '@/lib/direction';
 
 /** Fixed height so the merchants list can use `getItemLayout` too. 56 logo + 14×2. */
 export const MERCHANT_ITEM_HEIGHT = 84;
@@ -15,10 +14,12 @@ export const MERCHANT_ITEM_HEIGHT = 84;
 const LOGO = 56;
 
 export function MerchantCard({ merchant, onPress }: { merchant: Merchant; onPress: () => void }) {
-  const subtitle = [
-    humanizeActivity(merchant.activity_type),
-    merchant.items_count != null ? `${merchant.items_count} services` : null,
-  ]
+  // Both straight off the response: `activity_type_label` is the server's own display
+  // string, and `address` replaces the item count the API does not provide.
+  // The address is isolated because the seed data holds both Latin and Arabic addresses:
+  // a Latin one starting with a house number ("5 Autostrad Rd") has that number reordered
+  // to the far end when concatenated after an Arabic label.
+  const subtitle = [merchant.activity_type_label, autoIsolate(merchant.address)]
     .filter(Boolean)
     .join(' · ');
 
@@ -30,7 +31,7 @@ export function MerchantCard({ merchant, onPress }: { merchant: Merchant; onPres
       accessibilityLabel={merchant.shop_name}
     >
       <RemoteImage
-        uri={merchant.logo_url}
+        uri={merchant.shop_photo_url}
         size={LOGO}
         radius={14}
         icon="storefront-outline"

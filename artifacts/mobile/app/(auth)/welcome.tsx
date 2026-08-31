@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -22,6 +21,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useLocale } from '@/context/LocaleContext';
 import { LanguageSheet } from '@/components/LanguageSheet';
+import { QarMark } from '@/components/QarMark';
 import { alignStart } from '@/lib/direction';
 import { FONT } from '@/lib/typography';
 import { mirrorIcon } from '@/lib/rtl';
@@ -150,9 +150,7 @@ export default function WelcomeScreen() {
         </Pressable>
 
         <View style={styles.logoSection}>
-          <View style={styles.logoCard}>
-            <Image source={require('@/assets/images/logo.png')} style={styles.logoImage} resizeMode="cover" />
-          </View>
+          <QarMark />
           <Text style={styles.tagline}>{t('auth.welcomeTagline')}</Text>
         </View>
 
@@ -168,10 +166,11 @@ export default function WelcomeScreen() {
             {googleLoading ? (
               <ActivityIndicator color="#082926" />
             ) : (
-              <Text style={styles.googleG}>G</Text>
+              <>
+                <Ionicons name="logo-google" size={20} color="#4285F4" />
+                <Text style={styles.googleText}>{t('auth.continueWithGoogle')}</Text>
+              </>
             )}
-            <Text style={styles.googleText}>{t('auth.continueWithGoogle')}</Text>
-            <View style={{ width: 18 }} />
           </Pressable>
 
           <View style={styles.divider}>
@@ -229,22 +228,23 @@ const styles = StyleSheet.create({
   },
   langText: { fontSize: 13, fontFamily: FONT.semibold, color: '#FFFFFF' },
   container: { flex: 1, paddingHorizontal: 28, justifyContent: 'space-between' },
-  logoSection: { alignItems: 'center', marginTop: 20, gap: 10 },
-  logoCard: {
-    width: 160, height: 160, borderRadius: 32, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35, shadowRadius: 16, elevation: 10,
+  logoSection: { alignItems: 'center', marginTop: 44, gap: 14 },
+  tagline: {
+    fontSize: 15, fontFamily: FONT.regular, color: '#7fb5ae',
+    textAlign: 'center', lineHeight: 22, maxWidth: 300,
   },
-  logoImage: { width: 160, height: 160 },
-  tagline: { fontSize: 15, fontFamily: FONT.regular, color: '#7fb5ae', textAlign: 'center' },
   options: { gap: 14 },
   optionsTitle: { fontSize: 13, fontFamily: FONT.medium, color: '#7fb5ae', marginBottom: 2 },
+  // Icon and label are one centred group. The old layout was `space-between` with a
+  // letter "G" in a fixed 44pt box and an 18pt spacer opposite it to fake balance —
+  // which left the label off-centre and the glyph reading as a typed letter rather than
+  // the Google mark.
   googleBtn: {
-    borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', backgroundColor: '#FFFFFF',
+    borderRadius: 16, paddingVertical: 17, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 10, backgroundColor: '#FFFFFF',
   },
-  googleG: { width: 44, textAlign: 'center', fontSize: 24, fontFamily: FONT.bold, color: '#4285F4' },
-  googleText: { flex: 1, textAlign: 'center', fontSize: 16, fontFamily: FONT.semibold, color: '#082926' },
+  googleText: { fontSize: 16, fontFamily: FONT.semibold, color: '#082926' },
   optionBtn: {
     borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center',
     gap: 14, backgroundColor: '#0e3b33', borderWidth: 1, borderColor: '#1a5048',

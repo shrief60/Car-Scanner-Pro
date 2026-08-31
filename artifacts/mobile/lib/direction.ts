@@ -97,6 +97,25 @@ export function stackAnimation() {
  * Only for runs that are genuinely Latin/numeric. An Egyptian plate like `ا ج ب 234`
  * contains strong RTL letters and must keep its natural order — do not isolate it.
  */
+/**
+ * Isolates a run whose script is not known ahead of time, letting the text engine derive
+ * its direction from the run's own first strong character: U+2068 FIRST STRONG ISOLATE …
+ * U+2069 POP DIRECTIONAL ISOLATE.
+ *
+ * For backend free text that can arrive in either script. `address` is the live case —
+ * the seed data holds both `"5 Autostrad Rd, Maadi"` and `"٤٢ شارع عباس العقاد"`, and the
+ * Latin one is concatenated after an Arabic label (`صيانة · …`). Without an isolate the
+ * leading `5` is bidi-weak, joins the surrounding Arabic paragraph and renders at the far
+ * end: `Autostrad Rd, Maadi 5`. `ltrIsolate()` would fix that one and break the Arabic
+ * address beside it, which is why this exists separately.
+ */
+export function autoIsolate(value: string): string;
+export function autoIsolate(value: string | null | undefined): string | null;
+export function autoIsolate(value: string | null | undefined): string | null {
+  if (!value) return value ?? null;
+  return `\u2068${value}\u2069`;
+}
+
 export function ltrIsolate(value: string): string;
 export function ltrIsolate(value: string | null | undefined): string | null;
 export function ltrIsolate(value: string | null | undefined): string | null {

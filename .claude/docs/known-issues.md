@@ -91,7 +91,7 @@ never called — it is the natural session-validity probe.
 endpoints in 9 groups** — missing the entire **Google** and **Merchant menu** groups.
 Anything grepping `attached_assets/` will conclude those endpoints don't exist.
 
-Canonical copy: `.claude/reference/Qar.postman_collection.json` (41 endpoints,
+Canonical copy: `.claude/reference/Qar.postman_collection.json` (43 endpoints,
 11 groups). Consider deleting the stale one — git history keeps it.
 
 ## 8. RTL: the two traps that cost the most time

@@ -5,6 +5,327 @@ Generated from the Postman export. Prose added outside the markers below is pres
 <!-- BEGIN GENERATED -->
 <!-- Everything between these markers is produced by .claude/tools/gen-api-docs.py. Edit the collection, not this. -->
 
+## Merchants (client)
+
+### List merchants
+
+`GET /api/merchants`
+
+Client mode. Directory of active merchant shops. Premium shops are listed first.
+
+Headers: `Accept: application/json`
+
+**Response — `200`**
+
+```json
+[
+  {
+    "id": 4,
+    "shop_name": "Drive Style Accessories",
+    "owner_name": "Sara Ibrahim",
+    "activity_type": "accessories",
+    "activity_type_label": "Accessories",
+    "address": "88 El Tesaeen St, New Cairo",
+    "maps_url": "https://maps.google.com/?q=30.0287,31.4098",
+    "shop_photo_url": null,
+    "is_premium": true,
+    "phone": "+201012345604",
+    "email": "sara.ibrahim@drive-style.test"
+  },
+  {
+    "id": 1,
+    "shop_name": "Spark Wash Maadi",
+    "owner_name": "Ahmed Hassan",
+    "activity_type": "car_wash",
+    "activity_type_label": "Car wash",
+    "address": "15 Road 9, Maadi, Cairo",
+    "maps_url": "https://maps.google.com/?q=29.9602,31.2569",
+    "shop_photo_url": null,
+    "is_premium": true,
+    "phone": "+201012345601",
+    "email": "ahmed.hassan@sparkwash.test"
+  },
+  {
+    "id": 7,
+    "shop_name": "Spark Wash Maadi",
+    "owner_name": "Ahmed Hassan",
+    "activity_type": "car_wash",
+    "activity_type_label": "Car wash",
+    "address": "15 Road 9, Maadi, Cairo",
+    "maps_url": "https://maps.google.com/?q=29.9602,31.2569",
+    "shop_photo_url": null,
+    "is_premium": true,
+    "phone": "+201000000070",
+    "email": "catalog.ahmed@sparkwash.test"
+  },
+  {
+    "id": 2,
+    "shop_name": "AutoCare Nasr City",
+    "owner_name": "Mohamed El-Sayed",
+    "activity_type": "maintenance",
+    "activity_type_label": "Maintenance",
+    "address": "42 Abbas El-Akkad St, Nasr City, Cairo",
+    "maps_url": "https://maps.google.com/?q=30.0561,31.3300",
+    "shop_photo_url": null,
+    "is_premium": false,
+    "phone": "+201012345602",
+    "email": "mohamed.elsayed@autocare.test"
+  },
+  {
+    "id": 3,
+    "shop_name": "Green Fuel 6th October",
+    "owner_name": "Karim Mostafa",
+    "activity_type": "gas_station",
+    "activity_type_label": "Gas station",
+    "address": "Central Axis, 6th of October City, Giza",
+    "maps_url": "https://maps.google.com/?q=29.9285,30.9188",
+    "shop_photo_url": null,
+    "is_premium": false,
+    "phone": "+201012345603",
+    "email": null
+  },
+  {
+    "id": 5,
+    "shop_name": "Quick Serve Heliopolis",
+    "owner_name": "Omar Nabil",
+    "activity_type": "other",
+    "activity_type_label": "Other",
+    "address": "12 El Merghany St, Heliopolis, Cairo",
+    "maps_url": "https://maps.google.com/?q=30.0875,31.3248",
+    "shop_photo_url": null,
+    "is_premium": false,
+    "phone": "+201012345605",
+    "email": "omar.nabil@quickserve.test"
+  },
+  {
+    "id": 6,
+    "shop_name": "Spark Wash Maadi",
+    "owner_name": "Talon Boehm MD",
+    "activity_type": "car_wash",
+    "activity_type_label": "Car wash",
+    "address": "1555 Conroy Rue Apt. 550\nPourosville, CO 56955",
+    "maps_url": "https://maps.google.com/?q=81.401734,11.335886",
+    "shop_photo_url": null,
+    "is_premium": false,
+    "phone": "+201000000021",
+    "email": "salma@example.com"
+  }
+]
+```
+
+### List menu items
+
+`GET /api/menu-items`
+
+Client mode. Available items from every published merchant menu. Each item includes its shop.
+
+Headers: `Accept: application/json`
+
+**Response — `200`**
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Exterior wash",
+    "description": "Body wash and rinse",
+    "price": "80.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Exterior",
+    "duration_minutes": 20,
+    "is_available": true,
+    "sort_order": 0,
+    "merchant": {
+      "id": 1,
+      "shop_name": "Spark Wash Maadi",
+      "activity_type": "car_wash",
+      "activity_type_label": "Car wash"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Interior clean",
+    "description": "Vacuum and dashboard wipe",
+    "price": "120.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Interior",
+    "duration_minutes": 30,
+    "is_available": true,
+    "sort_order": 1,
+    "merchant": {
+      "id": 1,
+      "shop_name": "Spark Wash Maadi",
+      "activity_type": "car_wash",
+      "activity_type_label": "Car wash"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Full valet",
+    "description": "Exterior plus interior deep clean",
+    "price": "250.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Add-ons",
+    "duration_minutes": 60,
+    "is_available": true,
+    "sort_order": 2,
+    "merchant": {
+      "id": 1,
+      "shop_name": "Spark Wash Maadi",
+      "activity_type": "car_wash",
+      "activity_type_label": "Car wash"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Oil change",
+    "description": "Engine oil and filter",
+    "price": "450.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Maintenance",
+    "duration_minutes": 40,
+    "is_available": true,
+    "sort_order": 0,
+    "merchant": {
+      "id": 2,
+      "shop_name": "AutoCare Nasr City",
+      "activity_type": "maintenance",
+      "activity_type_label": "Maintenance"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Brake check",
+    "description": "Pads, discs, and fluid inspection",
+    "price": "200.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Maintenance",
+    "duration_minutes": 30,
+    "is_available": true,
+    "sort_order": 1,
+    "merchant": {
+      "id": 2,
+      "shop_name": "AutoCare Nasr City",
+      "activity_type": "maintenance",
+      "activity_type_label": "Maintenance"
+    }
+  },
+  {
+    "id": 6,
+    "name": "Fuel fill-up",
+    "description": "Attendant fill-up service",
+    "price": "0.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Fuel",
+    "duration_minutes": 10,
+    "is_available": true,
+    "sort_order": 0,
+    "merchant": {
+      "id": 3,
+      "shop_name": "Green Fuel 6th October",
+      "activity_type": "gas_station",
+      "activity_type_label": "Gas station"
+    }
+  },
+  {
+    "id": 7,
+    "name": "Tire pressure",
+    "description": "Check and adjust all tires",
+    "price": "20.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Add-ons",
+    "duration_minutes": 10,
+    "is_available": true,
+    "sort_order": 1,
+    "merchant": {
+      "id": 3,
+      "shop_name": "Green Fuel 6th October",
+      "activity_type": "gas_station",
+      "activity_type_label": "Gas station"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Phone holder",
+    "description": "Magnetic dashboard mount",
+    "price": "150.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Accessories",
+    "duration_minutes": null,
+    "is_available": true,
+    "sort_order": 0,
+    "merchant": {
+      "id": 4,
+      "shop_name": "Drive Style Accessories",
+      "activity_type": "accessories",
+      "activity_type_label": "Accessories"
+    }
+  },
+  {
+    "id": 9,
+    "name": "Seat covers",
+    "description": "Universal front-seat pair",
+    "price": "600.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Accessories",
+    "duration_minutes": null,
+    "is_available": true,
+    "sort_order": 1,
+    "merchant": {
+      "id": 4,
+      "shop_name": "Drive Style Accessories",
+      "activity_type": "accessories",
+      "activity_type_label": "Accessories"
+    }
+  },
+  {
+    "id": 10,
+    "name": "Standard service",
+    "description": "Ask the shop for details",
+    "price": "100.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Other",
+    "duration_minutes": 30,
+    "is_available": true,
+    "sort_order": 0,
+    "merchant": {
+      "id": 5,
+      "shop_name": "Quick Serve Heliopolis",
+      "activity_type": "other",
+      "activity_type_label": "Other"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Exterior wash",
+    "description": "Body wash and rinse",
+    "price": "80.00",
+    "currency": "EGP",
+    "image_url": null,
+    "category": "Exterior",
+    "duration_minutes": 20,
+    "is_available": true,
+    "sort_order": 1,
+    "merchant": {
+      "id": 7,
+      "shop_name": "Spark Wash Maadi",
+      "activity_type": "car_wash",
+      "activity_type_label": "Car wash"
+    }
+  }
+]
+```
+
 ## Merchant menu
 
 ### Public menu
@@ -19,23 +340,24 @@ Headers: `Accept: application/json`
 
 ```json
 {
-  "id": 6,
+  "id": 7,
   "title": "Spark Wash — Services",
   "description": "Interior and exterior car care.",
   "is_published": true,
   "merchant": {
-    "id": 7,
+    "id": 8,
     "shop_name": "Spark Wash Maadi",
-    "activity_type": "car_wash"
+    "activity_type": "car_wash",
+    "activity_type_label": "Car wash"
   },
   "items": [
     {
-      "id": 11,
+      "id": 12,
       "name": "Full exterior wash",
       "description": "Foam wash, rinse, hand dry.",
       "price": "175.00",
       "currency": "EGP",
-      "image_url": "https://qar-4uh5.onrender.com/storage/menu-items/5sx58drgG2gNNnwCFCPPPJWP78hBcWWqiAgOjJs3.jpg",
+      "image_url": "https://qar-4uh5.onrender.com/storage/menu-items/45VBBX5SDmbh52X87mF9CIzJ1WQtjeEWxZRDAE1S.jpg",
       "category": "Wash",
       "duration_minutes": 30,
       "is_available": true,
@@ -57,14 +379,15 @@ Headers: `Accept: application/json`
 
 ```json
 {
-  "id": 6,
+  "id": 7,
   "title": null,
   "description": null,
   "is_published": true,
   "merchant": {
-    "id": 7,
+    "id": 8,
     "shop_name": "Spark Wash Maadi",
-    "activity_type": "car_wash"
+    "activity_type": "car_wash",
+    "activity_type_label": "Car wash"
   },
   "items": []
 }
@@ -74,14 +397,15 @@ Headers: `Accept: application/json`
 
 ```json
 {
-  "id": 6,
+  "id": 7,
   "title": null,
   "description": null,
   "is_published": true,
   "merchant": {
-    "id": 7,
+    "id": 8,
     "shop_name": "Spark Wash Maadi",
-    "activity_type": "car_wash"
+    "activity_type": "car_wash",
+    "activity_type_label": "Car wash"
   },
   "items": []
 }
@@ -107,14 +431,15 @@ Headers: `Accept: application/json`, `Content-Type: application/json`
 
 ```json
 {
-  "id": 6,
+  "id": 7,
   "title": "Spark Wash — Services",
   "description": "Interior and exterior car care.",
   "is_published": true,
   "merchant": {
-    "id": 7,
+    "id": 8,
     "shop_name": "Spark Wash Maadi",
-    "activity_type": "car_wash"
+    "activity_type": "car_wash",
+    "activity_type_label": "Car wash"
   },
   "items": []
 }
@@ -141,12 +466,12 @@ Headers: `Accept: application/json`
 
 ```json
 {
-  "id": 11,
+  "id": 12,
   "name": "Full exterior wash",
   "description": "Foam wash, rinse, hand dry.",
   "price": "150.00",
   "currency": "EGP",
-  "image_url": "https://qar-4uh5.onrender.com/storage/menu-items/5sx58drgG2gNNnwCFCPPPJWP78hBcWWqiAgOjJs3.jpg",
+  "image_url": "https://qar-4uh5.onrender.com/storage/menu-items/45VBBX5SDmbh52X87mF9CIzJ1WQtjeEWxZRDAE1S.jpg",
   "category": "Wash",
   "duration_minutes": 30,
   "is_available": true,
@@ -172,12 +497,12 @@ Headers: `Accept: application/json`
 
 ```json
 {
-  "id": 11,
+  "id": 12,
   "name": "Full exterior wash",
   "description": "Foam wash, rinse, hand dry.",
   "price": "175.00",
   "currency": "EGP",
-  "image_url": "https://qar-4uh5.onrender.com/storage/menu-items/5sx58drgG2gNNnwCFCPPPJWP78hBcWWqiAgOjJs3.jpg",
+  "image_url": "https://qar-4uh5.onrender.com/storage/menu-items/45VBBX5SDmbh52X87mF9CIzJ1WQtjeEWxZRDAE1S.jpg",
   "category": "Wash",
   "duration_minutes": 30,
   "is_available": true,
@@ -203,56 +528,37 @@ Headers: `Accept: application/json`
 
 ---
 
-## Endpoints the app needs but the API does not have
+## Status: shipped and wired to the live API
 
-The client-side browsing flow (`app/(main)/service.tsx` → Menu / Merchants tabs) is
-**built and shipping against local fixtures** because these routes do not exist.
-Verified against the live server, not just the Postman export:
+`GET /api/merchants` and `GET /api/menu-items` now exist, and merchant profiles are
+seeded. `app/(main)/service.tsx` (Menu / Merchants tabs) reads them directly — the local
+fixture layer and its `USE_FIXTURES` flag are deleted.
 
-| Probe | Result |
+### What the client had to adapt to
+
+Verified against the live server on 2026-09-01 with a bearer token, not just the export:
+
+| Behaviour | Consequence for the client |
 | --- | --- |
-| `GET /api/merchants` | **404 — route does not exist** |
-| `GET /api/menu-items` | **404** |
-| `GET /api/services` | **404** |
-| `GET /api/menu/items` | **405** — POST only; it is the merchant-authoring route |
-| `GET /api/merchants/{id}/menu` | route exists, but **ids 1–15 all 404 — no merchant profiles are seeded** |
+| **Authenticated**, not public — an anonymous call is `401` | `services/merchants.ts` sends the token (`api.get(path)`, not `auth = false`) |
+| **No `activity_type` filter** — `?activity_type=maintenance` returns the same 15 rows as the unfiltered call | the category filter runs client-side, in `select` in `hooks/useMerchants.ts`, so all tabs share one cached fetch |
+| **No pagination** — both return a bare JSON array (15 merchants, 10 items) | `useInfiniteQuery` replaced with `useQuery`; no page cursor exists to follow |
+| `Accept-Language` is ignored; content is Arabic in both languages | rendered as-is, per the standing "app copy only" rule |
+| `image_url` and `shop_photo_url` are `null` on every seeded row | `RemoteImage` falls back to its icon — the layout already allowed for it |
 
-### Requested routes
+### Field names are used verbatim
 
-```
-GET /api/merchants?activity_type=maintenance&page=1          public
-  → paginated Merchant[]
-    { id, shop_name, activity_type, logo_url|null, address|null, items_count }
-  activity_type ∈ car_wash|maintenance|fuel_station|accessories|other; omit = all.
+No renaming or reshaping happens on the way in. In particular the client renders
+`shop_photo_url` (not `logo_url`), `activity_type_label` (a display string the server
+localises — the client no longer derives one), and `address`. The invented `items_count`
+is gone; the API does not provide it.
 
-GET /api/menu-items?activity_type=maintenance&page=1         public
-  → paginated MenuItem[], EACH ROW EMBEDDING its merchant:
-    { …MenuItem, merchant: { id, shop_name, activity_type } }
-  Only published menus. Stable ordering (merchant_id, sort_order, id).
-  ← the embedded `merchant` is not optional: without it the client N+1s to
-    name the shop on every card.
+The activity enum is **`gas_station`**, not `fuel_station` — the client's type said the
+latter, which would have silently mismatched.
 
-GET /api/menu-items/{id}                                     public, nice-to-have
-  → one MenuItem + embedded merchant. Enables deep links. The client works
-    without it (cache + GET /api/merchants/{id}/menu fallback).
-```
+### Regenerating
 
-### Two things to decide explicitly
-
-1. **Pagination has no envelope anywhere in this API yet** — `GET /api/packages`
-   returns a bare array, and no endpoint exposes `current_page` / `meta` / `links`.
-   Please use Laravel's default paginated resource collection
-   (`{ data, links, meta: { current_page, last_page, per_page, total } }`), which
-   survives `JsonResource::withoutWrapping()`. The client already parses both that and
-   a bare array, but the bare array cannot express "there is another page".
-2. **Seed merchant profiles.** Until then even the existing
-   `GET /api/merchants/{id}/menu` returns 404 for every id, so the feature has nothing
-   to show regardless of the new routes.
-
-### When these ship
-
-Flip `USE_FIXTURES` to `false` in `artifacts/mobile/services/merchants.ts` and delete
-`services/merchants.fixtures.ts` — no screen or hook changes. Then remember this doc
-set is generated: bump `EXPECT_ENDPOINTS` / `EXPECT_RESPONSES` in
-`.claude/tools/gen-api-docs.py` and add the new Postman folder to its `GROUP_FILE`
-map, or the generator will refuse to run.
+This doc set is generated. Replace `.claude/reference/Qar.postman_collection.json`, bump
+`EXPECT_ENDPOINTS` / `EXPECT_RESPONSES` in `.claude/tools/gen-api-docs.py` and add any new
+Postman folder to its `GROUP_FILE` map, or the generator refuses to run. Currently **43
+endpoints / 54 responses**.

@@ -7,8 +7,7 @@ import { ErrorRow } from '@/components/ListStates';
 import { RemoteImage } from '@/components/RemoteImage';
 import { Skeleton } from '@/components/Skeleton';
 import { useMenuItem } from '@/hooks/useMerchants';
-import { formatDuration, formatPrice, humanizeActivity } from '@/lib/format';
-import type { ActivityType } from '@/types/merchants';
+import { formatDuration, formatPrice } from '@/lib/format';
 import { FONT } from '@/lib/typography';
 import { mirrorIcon } from '@/lib/rtl';
 import { useLocale } from '@/context/LocaleContext';
@@ -29,11 +28,7 @@ export default function MenuItemScreen() {
   const itemId = Number(params.itemId);
   const merchantId = Number(params.merchantId);
 
-  const { item, isPending, error, refetch } = useMenuItem({
-    itemId,
-    merchantId,
-    activity: params.activity as ActivityType | undefined,
-  });
+  const { item, isPending, isError, refetch } = useMenuItem({ itemId, merchantId });
 
   const duration = formatDuration(item?.duration_minutes ?? null);
 
@@ -70,8 +65,8 @@ export default function MenuItemScreen() {
         </View>
 
         <View style={styles.body}>
-          {error && !item ? (
-            <ErrorRow message={(error as Error).message} onRetry={refetch} />
+          {isError && !item ? (
+            <ErrorRow message={t('serviceBrowser.shopUnavailable')} onRetry={refetch} />
           ) : isPending ? (
             <>
               <Skeleton width="75%" height={26} />
@@ -127,7 +122,7 @@ export default function MenuItemScreen() {
                     {item.merchant.shop_name}
                   </Text>
                   <Text style={[styles.shopMeta, alignStart()]}>
-                    {humanizeActivity(item.merchant.activity_type)} · {t('serviceBrowser.viewAllServices')}
+                    {item.merchant.activity_type_label} · {t('serviceBrowser.viewAllServices')}
                   </Text>
                 </View>
                 <Ionicons name={mirrorIcon('chevron-forward')} size={20} color="#7fb5ae" />

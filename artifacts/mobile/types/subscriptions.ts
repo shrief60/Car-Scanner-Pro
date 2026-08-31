@@ -7,6 +7,8 @@ export interface Package {
   name: string;
   slug: string;
   period: PackagePeriod;
+  /** Display-ready, rendered by the server. Use this rather than mapping `period`. */
+  period_label: string;
   duration_months: number;
   /** A decimal string — never parse it. See `formatPrice` in `lib/format.ts`. */
   price: string;
@@ -32,6 +34,8 @@ export interface Subscription {
   status: string;
   is_active: boolean;
   period: PackagePeriod;
+  /** Display-ready, rendered by the server. Use this rather than mapping `period`. */
+  period_label: string;
   duration_months: number;
   price: string;
   currency: string;

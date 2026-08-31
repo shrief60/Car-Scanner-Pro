@@ -1,31 +1,41 @@
 /**
  * Shapes for the merchant / menu browsing flow.
  *
- * `MerchantMenu` mirrors `GET /api/merchants/{merchantId}/menu` verbatim — it is the
- * one endpoint that actually exists. Everything else is specced in
- * `.claude/docs/api/merchant-menu.md` and served from fixtures until it ships.
+ * Every field here is a key the API actually returns — see
+ * `.claude/docs/api/merchant-menu.md`, regenerated from the Postman export. Nothing is
+ * renamed or reshaped on the way in: the screens read `shop_photo_url`,
+ * `activity_type_label` and so on directly off the response.
  */
 
+/** The server's own enum. Note `gas_station` — not `fuel_station`. */
 export type ActivityType =
   | 'car_wash'
   | 'maintenance'
-  | 'fuel_station'
+  | 'gas_station'
   | 'accessories'
   | 'other';
 
-/** Exactly the nested `merchant` object the live menu endpoint returns. */
+/** The trimmed merchant the API nests inside a menu and inside each feed item. */
 export interface MerchantRef {
   id: number;
   shop_name: string;
   activity_type: ActivityType;
+  /** Display-ready, localised by the server. Render this, don't derive one. */
+  activity_type_label: string;
 }
 
+/** A row of `GET /api/merchants`. */
 export interface Merchant extends MerchantRef {
-  logo_url?: string | null;
-  address?: string | null;
-  items_count?: number | null;
+  owner_name: string;
+  address: string | null;
+  maps_url: string | null;
+  shop_photo_url: string | null;
+  is_premium: boolean;
+  phone: string | null;
+  email: string | null;
 }
 
+/** An entry in a menu's `items[]`. */
 export interface MenuItem {
   id: number;
   name: string;
@@ -41,7 +51,12 @@ export interface MenuItem {
   sort_order: number;
 }
 
-/** Verbatim mirror of GET /api/merchants/{merchantId}/menu. */
+/** A row of `GET /api/menu-items` — the same item with its merchant attached. */
+export interface MenuItemWithMerchant extends MenuItem {
+  merchant: MerchantRef;
+}
+
+/** `GET /api/merchants/{merchantId}/menu`. */
 export interface MerchantMenu {
   id: number;
   title: string | null;
@@ -49,20 +64,4 @@ export interface MerchantMenu {
   is_published: boolean;
   merchant: MerchantRef;
   items: MenuItem[];
-}
-
-/**
- * A row in the cross-merchant feed. The merchant is embedded **per item** so a card
- * can name its shop without a second lookup — the spec requires the real endpoint to
- * do the same, which is what keeps the fixture→API swap to one file.
- */
-export interface MenuItemWithMerchant extends MenuItem {
-  merchant: MerchantRef;
-}
-
-export interface Page<T> {
-  items: T[];
-  /** null when there is nothing more to load. */
-  nextPage: number | null;
-  total: number | null;
 }
